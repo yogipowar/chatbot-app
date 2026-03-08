@@ -29,8 +29,8 @@
     iframe.style.position = "fixed";
     iframe.style.bottom = "90px";
     iframe.style.right = "20px";
-    iframe.style.width = "380px";
-    iframe.style.height = "600px";
+    iframe.style.width = "385px";
+    iframe.style.height = "524px";
     iframe.style.border = "none";
     iframe.style.display = "none";
     iframe.style.zIndex = "9999";
