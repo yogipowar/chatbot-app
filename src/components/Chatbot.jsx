@@ -27,7 +27,7 @@ function Chatbot() {
       <div style={{ height: "300px", border: "1px solid #ccc", padding: "10px", overflowY: "auto" }}>
         {messages.map((msg, index) => (
           <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left" }}>
-            <p><b>{msg.sender}:</b> {msg.text}</p>
+            <p><b>{msg.sender}:</b> {msg.text} </p>
           </div>
         ))}
       </div>
