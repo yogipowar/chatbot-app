@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Send, Sparkles } from "lucide-react";
+import "./chatbot.css";
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [websiteId, setWebsiteId] = useState(null);
+
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -11,41 +15,75 @@ function Chatbot() {
     setWebsiteId(id);
   }, []);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const sendMessage = () => {
     if (!input.trim()) return;
 
     const userMessage = { sender: "user", text: input };
-
     setMessages((prev) => [...prev, userMessage]);
 
-    // Fake bot reply
     setTimeout(() => {
-      const botMessage = { sender: "bot", text: "Hello! How can I help you?" };
+      const botMessage = {
+        sender: "bot",
+        text: "Hello! How can I help you?"
+      };
       setMessages((prev) => [...prev, botMessage]);
     }, 500);
 
     setInput("");
   };
 
-  return (
-    <div style={{ width: "400px", margin: "auto" }}>
-      <h2>Chatbot: {websiteId}</h2>
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") sendMessage();
+  };
 
-      <div style={{ height: "300px", border: "1px solid #ccc", padding: "10px", overflowY: "auto" }}>
-        {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.sender === "user" ? "right" : "left" }}>
-            <p><b>{msg.sender}:</b> {msg.text} </p>
-          </div>
-        ))}
+  return (
+    <div className="chatbotContainer">
+
+      <div className="chatHeader">
+        <span>AI Support</span>
       </div>
 
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Type message..."
-      />
+      <div className="chatMessages">
 
-      <button onClick={sendMessage}>Send</button>
+        {messages.map((msg, index) => (
+          <div key={index} className={`messageRow ${msg.sender}`}>
+
+            {msg.sender === "bot" && (
+              <div className="botIcon">
+                <Sparkles size={18} />
+              </div>
+            )}
+
+            <div className="messageBubble">
+              {msg.text}
+            </div>
+
+          </div>
+        ))}
+
+        <div ref={messagesEndRef}></div>
+
+      </div>
+
+      <div className="chatInputArea">
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+          placeholder="Ask something..."
+        />
+
+        <button onClick={sendMessage}>
+          <Send size={18} />
+        </button>
+
+      </div>
+
     </div>
   );
 }

@@ -37,7 +37,7 @@
 
     button.onclick = () => {
         iframe.style.display =
-            iframe.style.display === "none" ? "block" : "none";
+        iframe.style.display === "none" ? "block" : "none";
     };
 
     document.body.appendChild(button);
