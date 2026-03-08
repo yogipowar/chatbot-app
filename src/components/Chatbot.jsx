@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [websiteId, setWebsiteId] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("websiteId");
+    setWebsiteId(id);
+  }, []);
 
   const sendMessage = () => {
     if (!input.trim()) return;
@@ -22,7 +29,7 @@ function Chatbot() {
 
   return (
     <div style={{ width: "400px", margin: "auto" }}>
-      <h2>Chatbot</h2>
+      <h2>Chatbot: {websiteId}</h2>
 
       <div style={{ height: "300px", border: "1px solid #ccc", padding: "10px", overflowY: "auto" }}>
         {messages.map((msg, index) => (
