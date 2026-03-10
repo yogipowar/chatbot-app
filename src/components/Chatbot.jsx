@@ -40,7 +40,7 @@ function Chatbot() {
 
     const userQuestion = input;
     const userMessage = { sender: "user", text: userQuestion };
-    
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -52,15 +52,15 @@ function Chatbot() {
         body: JSON.stringify({ question: userQuestion, websiteId })
       });
       const data = await response.json();
-      
-      setMessages(prev => [...prev, { 
-        sender: "bot", 
-        text: data?.data || "No response received" 
+
+      setMessages(prev => [...prev, {
+        sender: "bot",
+        text: data?.data || "No response received"
       }]);
     } catch (e) {
-      setMessages(prev => [...prev, { 
-        sender: "bot", 
-        text: "Connection error. Please check your CORS settings or try again later." 
+      setMessages(prev => [...prev, {
+        sender: "bot",
+        text: "Connection error. Please check your CORS settings or try again later."
       }]);
     } finally {
       setIsLoading(false);
@@ -77,7 +77,12 @@ function Chatbot() {
   return (
     <div className="chatbotContainer">
       <div className="chatHeader">
-        <span>AI Support</span>
+        <div className="headerLeft">
+          <span>AI Support</span>
+        </div>
+        <button className="humanConnectBtn" onClick={() => window.open('https://scrollosoft.com/contact', '_blank')}>
+          <span>Human Connect</span>
+        </button>
       </div>
 
       <div className="chatMessages">
@@ -88,7 +93,7 @@ function Chatbot() {
                 <BotIcon isTyping={false} />
               </div>
             )}
-            <div className="messageBubble">
+            <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
               {msg.sender === "bot" ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {msg.text}
@@ -106,7 +111,7 @@ function Chatbot() {
               <BotIcon isTyping={true} />
             </div>
             <div className="messageBubble typing-container">
-              <div className="typing-dots">Thinking 
+              <div className="typing-dots">Thinking
                 <span> .</span><span>.</span><span>.</span>
               </div>
             </div>
