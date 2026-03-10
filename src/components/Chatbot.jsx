@@ -19,21 +19,47 @@ function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
 
     const userMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
 
-    setTimeout(() => {
+    const question = input;
+    setInput("");
+
+    try {
+      const response = await fetch(
+        "https://chatbotapi.scrollosoft.com/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            question: question,
+            websiteId: websiteId
+          })
+        }
+      );
+
+      const data = await response.json();
+
       const botMessage = {
         sender: "bot",
-        text: "Hello! How can I help you?"
+        text: data?.data || "No response received"
       };
-      setMessages((prev) => [...prev, botMessage]);
-    }, 500);
 
-    setInput("");
+      setMessages((prev) => [...prev, botMessage]);
+
+    } catch (error) {
+      const errorMessage = {
+        sender: "bot",
+        text: "Something went wrong. Please try again."
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    }
   };
 
   const handleKeyPress = (e) => {
