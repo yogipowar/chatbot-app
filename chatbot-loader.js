@@ -8,7 +8,7 @@
     
     // Using the Sparkle SVG directly in the button for a premium look
    button.innerHTML = `
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="white"/>
         </svg>
     `;
@@ -18,8 +18,8 @@
         position: "fixed",
         bottom: "20px",
         right: "20px",
-        width: "60px",
-        height: "60px",
+        width: "50px",
+        height: "50px",
         // A more dynamic "Gemini" inspired gradient
         background: "linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%)",
         color: "#fff",
@@ -42,7 +42,7 @@
         bottom: "95px",
         right: "20px",
         width: "385px",
-        height: "550px",
+        height: "520px",
         border: "none",
         borderRadius: "16px",
         boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
