@@ -53,7 +53,7 @@
   background: var(--bg-light);
 }
 
-.chatMessages::-webkit-scrollbar {
+.auto-expand-input::-webkit-scrollbar, .chatMessages::-webkit-scrollbar {
   display: none;
 }
 
@@ -115,6 +115,7 @@
   font-size: 14px;
   line-height: 1.5;
   font-weight: 500;
+  text-align: left;
 }
 
 .messageRow.bot .messageBubble {
@@ -159,13 +160,48 @@
 }
 
 /* Input Area */
+.auto-expand-input {
+  flex: 1;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  outline: none;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-family: inherit;
+  color: var(--text-dark);
+  transition: border-color 0.2s;
+  resize: none; /* Disables manual resizing */
+  line-height: 20px; /* Essential for calculating 4 lines */
+  max-height: 100px; /* (line-height 20px * 4 lines) + padding */
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  overflow-y: auto; /* Show scrollbar after 4 lines */
+}
+
+.auto-expand-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.auto-expand-input::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.auto-expand-input:focus {
+  background: white;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
 .chatInputArea {
   border-top: 1px solid var(--border-color);
   padding: 14px 16px;
   display: flex;
   gap: 12px;
   background: white;
-  align-items: center;
+  align-items: flex-end; /* Keeps button at the bottom as input grows */
 }
 
 .chatInputArea input {

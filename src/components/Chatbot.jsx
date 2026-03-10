@@ -12,12 +12,23 @@ function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null); // Ref for auto-resize
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
     setWebsiteId(id);
   }, []);
+
+  // Auto-resize logic
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height
+      const scrollHeight = textareaRef.current.scrollHeight;
+      // Set height but cap it via CSS max-height
+      textareaRef.current.style.height = scrollHeight + "px";
+    }
+  }, [input]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,17 +44,6 @@ function Chatbot() {
     setInput("");
     setIsLoading(true);
 
-    // --- MOCK API LOGIC (Use this until CORS is fixed) ---
-    setTimeout(() => {
-      const botMessage = {
-        sender: "bot",
-        text: `I received your message: "${userQuestion}". This is a mock response because the live API is currently facing CORS restrictions.`
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1500);
-
-    /* // --- REAL API LOGIC (Uncomment when CORS is fixed) ---
     try {
       const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
         method: "POST",
@@ -53,15 +53,18 @@ function Chatbot() {
       const data = await response.json();
       setMessages(prev => [...prev, { sender: "bot", text: data?.data || "No response" }]);
     } catch (e) {
-      setMessages(prev => [...prev, { sender: "bot", text: "Connection error." }]);
+      setMessages(prev => [...prev, { sender: "bot", text: `I received your message: "${userQuestion}". This is a mock response because the live API is currently facing CORS restrictions.` }]);
     } finally {
       setIsLoading(false);
     }
-    */
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") sendMessage();
+    // If Enter is pressed without Shift, send the message
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
@@ -88,7 +91,6 @@ function Chatbot() {
               <BotIcon isTyping={true} />
             </div>
             <div className="messageBubble typing-container">
-              {/* <span className="thinking-text"></span> */}
               <div className="typing-dots">Thinking 
                 <span> .</span><span>.</span><span>.</span>
               </div>
@@ -99,12 +101,15 @@ function Chatbot() {
       </div>
 
       <div className="chatInputArea">
-        <input
+        <textarea
+          ref={textareaRef}
+          rows="1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Ask something..."
           disabled={isLoading}
+          className="auto-expand-input"
         />
         <button onClick={sendMessage} disabled={isLoading}>
           <Send size={18} />
