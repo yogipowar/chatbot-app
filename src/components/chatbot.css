@@ -48,7 +48,7 @@
 /* Message Area */
 .chatMessages {
   flex: 1;
-  padding: 20px;
+  padding: 20px 14px;
   overflow-y: auto;
   background: var(--bg-light);
 }
@@ -74,14 +74,14 @@
 
 /* Bot Icon Circle */
 .botIcon {
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   background: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 10px;
+  margin-right: 5px;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #f1f5f9;
@@ -110,9 +110,9 @@
 /* Message Bubbles */
 .messageBubble {
   max-width: 75%;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-radius: 18px;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
   font-weight: 500;
   text-align: left;

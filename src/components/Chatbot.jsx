@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./chatbot.css";
 import BotIcon from "./BotIcon";
 
@@ -12,7 +14,7 @@ function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null); // Ref for auto-resize
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,12 +22,11 @@ function Chatbot() {
     setWebsiteId(id);
   }, []);
 
-  // Auto-resize logic
+  // Auto-resize Logic for Textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"; // Reset height
+      textareaRef.current.style.height = "auto";
       const scrollHeight = textareaRef.current.scrollHeight;
-      // Set height but cap it via CSS max-height
       textareaRef.current.style.height = scrollHeight + "px";
     }
   }, [input]);
@@ -37,10 +38,10 @@ function Chatbot() {
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
-
     const userQuestion = input;
+    const userMessage = { sender: "user", text: userQuestion };
+    
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
@@ -51,16 +52,22 @@ function Chatbot() {
         body: JSON.stringify({ question: userQuestion, websiteId })
       });
       const data = await response.json();
-      setMessages(prev => [...prev, { sender: "bot", text: data?.data || "No response" }]);
+      
+      setMessages(prev => [...prev, { 
+        sender: "bot", 
+        text: data?.data || "No response received" 
+      }]);
     } catch (e) {
-      setMessages(prev => [...prev, { sender: "bot", text: `I received your message: "${userQuestion}". This is a mock response because the live API is currently facing CORS restrictions.` }]);
+      setMessages(prev => [...prev, { 
+        sender: "bot", 
+        text: "Connection error. Please check your CORS settings or try again later." 
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    // If Enter is pressed without Shift, send the message
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -81,7 +88,15 @@ function Chatbot() {
                 <BotIcon isTyping={false} />
               </div>
             )}
-            <div className="messageBubble">{msg.text}</div>
+            <div className="messageBubble">
+              {msg.sender === "bot" ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {msg.text}
+                </ReactMarkdown>
+              ) : (
+                msg.text
+              )}
+            </div>
           </div>
         ))}
 
