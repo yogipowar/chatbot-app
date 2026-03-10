@@ -7,9 +7,9 @@
     const button = document.createElement("div");
     
     // Using the Sparkle SVG directly in the button for a premium look
-    button.innerHTML = `
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="white"/>
+   button.innerHTML = `
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="white"/>
         </svg>
     `;
 
@@ -20,7 +20,8 @@
         right: "20px",
         width: "60px",
         height: "60px",
-        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+        // A more dynamic "Gemini" inspired gradient
+        background: "linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%)",
         color: "#fff",
         display: "flex",
         alignItems: "center",
@@ -28,8 +29,8 @@
         borderRadius: "50%",
         cursor: "pointer",
         zIndex: "9999",
-        boxShadow: "0 4px 15px rgba(79, 70, 229, 0.4)",
-        transition: "transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        boxShadow: "0 4px 20px rgba(66, 133, 244, 0.4)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     });
 
     // 3. Iframe Styling (Adding a smooth slide-up animation)
