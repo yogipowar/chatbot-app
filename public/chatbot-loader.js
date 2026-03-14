@@ -3,7 +3,6 @@
 
     const websiteId = window.chatbotConfig?.websiteId;
 
-    // 1. Create the floating button
     const button = document.createElement("div");
     
     // Using the Sparkle SVG directly in the button for a premium look
@@ -13,14 +12,12 @@
         </svg>
     `;
 
-    // 2. Button Styling (Matching your Indigo/Violet gradient)
     Object.assign(button.style, {
         position: "fixed",
         bottom: "20px",
         right: "20px",
         width: "50px",
         height: "50px",
-        // A more dynamic "Gemini" inspired gradient
         background: "linear-gradient(135deg, #4285f4 0%, #9b72cb 50%, #d96570 100%)",
         color: "#fff",
         display: "flex",
@@ -33,7 +30,6 @@
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     });
 
-    // 3. Iframe Styling (Adding a smooth slide-up animation)
     const iframe = document.createElement("iframe");
     iframe.src = `https://yogipowar.github.io/chatbot-app/?websiteId=${websiteId}`;
 
@@ -53,14 +49,12 @@
         transition: "opacity 0.3s ease, transform 0.3s ease",
     });
 
-    // 4. Toggle Logic with Animation
     let isOpen = false;
     button.onclick = () => {
         isOpen = !isOpen;
         if (isOpen) {
             iframe.style.display = "block";
             button.style.transform = "scale(0.9) rotate(90deg)";
-            // Small timeout to allow display:block to hit the DOM before animating
             setTimeout(() => {
                 iframe.style.opacity = "1";
                 iframe.style.transform = "translateY(0)";
@@ -75,7 +69,6 @@
         }
     };
 
-    // 5. Hover Effects
     button.onmouseenter = () => { if(!isOpen) button.style.transform = "scale(1.1)"; };
     button.onmouseleave = () => { if(!isOpen) button.style.transform = "scale(1)"; };
 
