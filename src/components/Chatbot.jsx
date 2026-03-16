@@ -9,33 +9,47 @@ function Chatbot() {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! How can I help you with Scrollosoft today?" }
   ]);
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // New States for User Details
   const [websiteId, setWebsiteId] = useState(null);
-  const [activeUrl, setActiveUrl] = useState(""); // Stores pdfUrl or sitemapUrl
+  const [activeUrl, setActiveUrl] = useState("");
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 1. Initial Load: Get websiteId and then fetch User Details
+  // Get websiteId from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId") || window.chatbotWebsiteId;
+    const id = params.get("websiteId");
 
-    console.log("Website ID on load:", id);
+    console.log("Website ID:", id);
 
     if (id) {
       setWebsiteId(id);
       fetchUserDetails(id);
+    } else {
+      console.error("websiteId not found in URL");
     }
   }, []);
 
-
+  // Fetch User Details API (POST request)
   const fetchUserDetails = async (id) => {
     try {
-      const response = await fetch(`https://chatbotapi.scrollosoft.com/users/get-details?id=${id}`);
+      const response = await fetch(
+        "https://chatbotapi.scrollosoft.com/users/get-details",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: id,
+          }),
+        }
+      );
+
       const result = await response.json();
 
       console.log("User details response:", result);
@@ -46,47 +60,43 @@ function Chatbot() {
         console.log("URL selected:", urlToUse);
 
         setActiveUrl(urlToUse);
+      } else {
+        console.error("User data not found");
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
     }
   };
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-   const id = params.get("websiteId") || window.chatbotWebsiteId;
-
-    console.log("Website ID:", id);
-
-    if (id) {
-      setWebsiteId(id);
-      fetchUserDetails(id);
-    }
-  }, []);
-
-  // Auto-resize Logic for Textarea
+  // Auto resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
     }
   }, [input]);
 
+  // Scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // 2. Updated Send Message Logic
+  // Send message
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
     if (!activeUrl) {
-      setMessages(prev => [...prev, {
-        sender: "bot",
-        text: "Chatbot is still loading data. Please try again."
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Chatbot is still loading data. Please try again.",
+        },
+      ]);
       return;
     }
+
     const userQuestion = input;
 
     console.log("Question:", userQuestion);
@@ -97,31 +107,43 @@ function Chatbot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: userQuestion,
-          url: activeUrl // Passing the URL fetched from the details API
-        })
-      });
+      const response = await fetch(
+        "https://chatbotapi.scrollosoft.com/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: userQuestion,
+            url: activeUrl,
+          }),
+        }
+      );
 
       const data = await response.json();
 
-      setMessages(prev => [...prev, {
-        sender: "bot",
-        text: data?.data || "No response received"
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: data?.data || "No response received",
+        },
+      ]);
     } catch (e) {
-      setMessages(prev => [...prev, {
-        sender: "bot",
-        text: "Connection error. Please try again later."
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Connection error. Please try again later.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Enter key handler
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -135,7 +157,13 @@ function Chatbot() {
         <div className="headerLeft">
           <span>AI Support</span>
         </div>
-        <button className="humanConnectBtn" onClick={() => window.open('https://scrollosoft.com/contact', '_blank')}>
+
+        <button
+          className="humanConnectBtn"
+          onClick={() =>
+            window.open("https://scrollosoft.com/contact", "_blank")
+          }
+        >
           <span>Human Connect</span>
         </button>
       </div>
@@ -148,6 +176,7 @@ function Chatbot() {
                 <BotIcon isTyping={false} />
               </div>
             )}
+
             <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
               {msg.sender === "bot" ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -165,13 +194,17 @@ function Chatbot() {
             <div className="botIcon">
               <BotIcon isTyping={true} />
             </div>
+
             <div className="messageBubble typing-container">
-              <div className="typing-dots">Thinking
-                <span> .</span><span>.</span><span>.</span>
+              <div className="typing-dots">
+                Thinking <span>.</span>
+                <span>.</span>
+                <span>.</span>
               </div>
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef}></div>
       </div>
 
@@ -183,10 +216,14 @@ function Chatbot() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Ask something..."
-          disabled={isLoading}
+          disabled={isLoading || !activeUrl}
           className="auto-expand-input"
         />
-        <button onClick={sendMessage} disabled={isLoading}>
+
+        <button
+          onClick={sendMessage}
+          disabled={isLoading || !activeUrl}
+        >
           <Send size={18} />
         </button>
       </div>
