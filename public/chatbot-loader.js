@@ -2,11 +2,11 @@
     console.log("Chatbot loader running");
 
     const websiteId = window.chatbotConfig?.websiteId;
-
+    window.chatbotWebsiteId = websiteId;
     const button = document.createElement("div");
-    
+
     // Using the Sparkle SVG directly in the button for a premium look
-   button.innerHTML = `
+    button.innerHTML = `
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="white"/>
         </svg>
@@ -69,8 +69,8 @@
         }
     };
 
-    button.onmouseenter = () => { if(!isOpen) button.style.transform = "scale(1.1)"; };
-    button.onmouseleave = () => { if(!isOpen) button.style.transform = "scale(1)"; };
+    button.onmouseenter = () => { if (!isOpen) button.style.transform = "scale(1.1)"; };
+    button.onmouseleave = () => { if (!isOpen) button.style.transform = "scale(1)"; };
 
     document.body.appendChild(button);
     document.body.appendChild(iframe);

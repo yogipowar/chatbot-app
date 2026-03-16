@@ -10,24 +10,65 @@ function Chatbot() {
     { sender: "bot", text: "Hello! How can I help you with Scrollosoft today?" }
   ]);
   const [input, setInput] = useState("");
-  const [websiteId, setWebsiteId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // New States for User Details
+  const [websiteId, setWebsiteId] = useState(null);
+  const [activeUrl, setActiveUrl] = useState(""); // Stores pdfUrl or sitemapUrl
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
+  // 1. Initial Load: Get websiteId and then fetch User Details
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
-    setWebsiteId(id);
+    const id = params.get("websiteId") || window.chatbotWebsiteId;
+
+    console.log("Website ID on load:", id);
+
+    if (id) {
+      setWebsiteId(id);
+      fetchUserDetails(id);
+    }
+  }, []);
+
+
+  const fetchUserDetails = async (id) => {
+    try {
+      const response = await fetch(`https://chatbotapi.scrollosoft.com/users/get-details?id=${id}`);
+      const result = await response.json();
+
+      console.log("User details response:", result);
+
+      if (result.status && result.user) {
+        const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
+
+        console.log("URL selected:", urlToUse);
+
+        setActiveUrl(urlToUse);
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+   const id = params.get("websiteId") || window.chatbotWebsiteId;
+
+    console.log("Website ID:", id);
+
+    if (id) {
+      setWebsiteId(id);
+      fetchUserDetails(id);
+    }
   }, []);
 
   // Auto-resize Logic for Textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = scrollHeight + "px";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, [input]);
 
@@ -35,13 +76,23 @@ function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
+  // 2. Updated Send Message Logic
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
+    if (!activeUrl) {
+      setMessages(prev => [...prev, {
+        sender: "bot",
+        text: "Chatbot is still loading data. Please try again."
+      }]);
+      return;
+    }
     const userQuestion = input;
-    const userMessage = { sender: "user", text: userQuestion };
 
-    setMessages((prev) => [...prev, userMessage]);
+    console.log("Question:", userQuestion);
+    console.log("URL sent to API:", activeUrl);
+
+    setMessages((prev) => [...prev, { sender: "user", text: userQuestion }]);
     setInput("");
     setIsLoading(true);
 
@@ -49,8 +100,12 @@ function Chatbot() {
       const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userQuestion, websiteId })
+        body: JSON.stringify({
+          question: userQuestion,
+          url: activeUrl // Passing the URL fetched from the details API
+        })
       });
+
       const data = await response.json();
 
       setMessages(prev => [...prev, {
@@ -60,7 +115,7 @@ function Chatbot() {
     } catch (e) {
       setMessages(prev => [...prev, {
         sender: "bot",
-        text: "Connection error. Please check your CORS settings or try again later."
+        text: "Connection error. Please try again later."
       }]);
     } finally {
       setIsLoading(false);
