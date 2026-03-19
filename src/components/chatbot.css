@@ -21,6 +21,7 @@
     overflow: hidden;
     font-family: "Urbanist", sans-serif;
     border: 1px solid var(--border-color);
+    position: relative;
 }
 
 /* Header: Professional White with Gradient Accent Line */
@@ -322,4 +323,79 @@
 
 p {
     margin: 8px 0;
+}
+
+.humanDrawerOverlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.humanDrawer {
+    background: white;
+    width: 100%;
+    max-width: 380px;
+    padding: 20px;
+    border-radius: 16px 16px 0 0;
+    animation: slideUp .3s ease;
+}
+
+.humanDrawer input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.humanDrawer button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    border: none;
+    background: #4285f4;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.drawerClose {
+    background: #ddd !important;
+    color: #333 !important;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%)
+    }
+
+    to {
+        transform: translateY(0)
+    }
+}
+
+.chatTabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+}
+
+.chatTabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.chatTabs .activeTab {
+  background: white;
+  font-weight: bold;
+  border-bottom: 2px solid black;
 }

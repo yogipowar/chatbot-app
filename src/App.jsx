@@ -5,6 +5,7 @@ import "./App.css";
 import "./index.css";
 import LoginPage from './components/LoginPage';
 import AdminPanel from './components/AdminPanel';
+import HumanChat from './components/HumanChat';
 
 function App() {
   // auth state to manage access to the admin panel
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Chatbot />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/*" element={<AdminPanel />} />
+        <Route path="/human-chat" element={<HumanChat />} />
       </Routes>
     </Router>
   );

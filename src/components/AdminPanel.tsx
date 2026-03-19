@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminPanel.css";
+import AdminSidebar from "./AdminSidebar";
 
 interface User {
   id: number;
@@ -65,21 +66,7 @@ const AdminPanel = () => {
 
   return (
     <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <div className="sidebar-logo">Admin Panel</div>
-
-        <ul className="sidebar-nav">
-          <li>
-            <a className="active">Admin Registration</a>
-          </li>
-        </ul>
-
-        <div className="sidebar-bottom">
-          <button className="logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </aside>
+      <AdminSidebar onLogout={handleLogout} />
 
       <main className="admin-main">
         <header className="admin-header">
