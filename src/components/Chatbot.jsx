@@ -19,17 +19,40 @@ function Chatbot() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasHumanChat, setHasHumanChat] = useState(false);
-  const [activeTab, setActiveTab] = useState("ai"); // "ai" | "human"
+  const [activeTab, setActiveTab] = useState("ai");
   const [conversationId, setConversationId] = useState(null);
   const [humanMessages, setHumanMessages] = useState([]);
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
 
-  const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Get websiteId from URL
+  const aiMessagesEndRef = useRef(null);
+  const humanMessagesEndRef = useRef(null);
+
+
   useEffect(() => {
+    const savedHasHumanChat = localStorage.getItem("hasHumanChat");
+    const savedUserId = localStorage.getItem("userId");
+    const savedConversationId = localStorage.getItem("conversationId");
+
+    if (savedHasHumanChat === "true") {
+      setHasHumanChat(true);
+    }
+
+    if (savedUserId) {
+      setUserId(savedUserId);
+    }
+
+    if (savedConversationId) {
+      setConversationId(savedConversationId);
+    }
+  }, []);
+
+  useEffect(() => {
+    // const params = new URLSearchParams(window.location.search);
+    // const id = '13';
+
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
 
@@ -41,7 +64,6 @@ function Chatbot() {
     }
   }, []);
 
-  // Fetch User Details
   const fetchUserDetails = async (id) => {
     try {
       const response = await fetch(
@@ -66,7 +88,6 @@ function Chatbot() {
     }
   };
 
-  // Auto resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -75,10 +96,15 @@ function Chatbot() {
     }
   }, [input]);
 
-  // Scroll to latest message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+    if (activeTab === "ai") {
+      aiMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else if (activeTab === "human") {
+      humanMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, humanMessages, activeTab]);
+
+
 
   // Send message
   const sendMessage = async () => {
@@ -127,7 +153,7 @@ function Chatbot() {
         }
       ]);
 
-      // 🔹 Detect human connect
+      // Detect human connect
       if (botResponse === "CONNECTING TO HUMAN") {
         setShowHumanDrawer(true);
       }
@@ -151,7 +177,7 @@ function Chatbot() {
     setIsSubmitting(true);
 
     try {
-      // 🔹 1. USER AUTH
+      // USER AUTH
       const authResponse = await fetch(
         "https://chatbotapi.scrollosoft.com/users/user-auth",
         {
@@ -171,13 +197,13 @@ function Chatbot() {
 
       if (authResult?.status && authResult?.user?.id) {
         const userId = authResult.user.id;
-        setUserId(userId)
+        setUserId(userId);
+        localStorage.setItem("userId", userId);
 
-        // ✅ CLOSE DRAWER IMMEDIATELY
         setShowHumanDrawer(false);
         setEmail("");
 
-        // 🔹 2. CALL LIST API
+        // CALL LIST API
         const listResponse = await fetch(
           `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
         );
@@ -186,12 +212,13 @@ function Chatbot() {
         console.log("List Result:", listResult);
 
         if (listResult?.status) {
-          // 🔥 Set hasHumanChat based on whether data is not empty
-          setHasHumanChat(listResult.data.length > 0);
+          const hasChat = listResult.data.length > 0;
+          setHasHumanChat(hasChat);
+          localStorage.setItem("hasHumanChat", hasChat.toString());
 
-          // 🔥 CASE 1: NO CONVERSATION → CREATE
-          if (listResult.data.length === 0) {
-            // 🔹 CREATE CONVERSATION
+          // CASE 1: NO CONVERSATION → CREATE
+          if (!hasChat) {
+            // CREATE CONVERSATION
             const createResponse = await fetch(
               "https://chatbotapi.scrollosoft.com/conversation/create",
               {
@@ -210,7 +237,7 @@ function Chatbot() {
             const createResult = await createResponse.json();
             console.log("Create Result:", createResult);
 
-            // 🔹 CALL LIST AGAIN
+            // CALL LIST AGAIN
             const newListResponse = await fetch(
               `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
             );
@@ -222,17 +249,20 @@ function Chatbot() {
               const conversationId = newListResult.data[0].id;
 
               setConversationId(conversationId);
+              localStorage.setItem("conversationId", conversationId);
               setHasHumanChat(true);
+              localStorage.setItem("hasHumanChat", "true");
               fetchHumanMessages(conversationId);
 
               console.log("New Conversation ID:", conversationId);
             }
-
           } else {
-            // 🔥 EXISTING CONVERSATION
+            // EXISTING CONVERSATION
             const conversationId = listResult.data[0].id;
             setConversationId(conversationId);
+            localStorage.setItem("conversationId", conversationId);
             setHasHumanChat(true);
+            localStorage.setItem("hasHumanChat", "true");
             fetchHumanMessages(conversationId);
 
             console.log("Conversation ID:", conversationId);
@@ -247,7 +277,6 @@ function Chatbot() {
 
     setIsSubmitting(false);
   };
-
 
   const fetchHumanMessages = async (convId) => {
     if (!convId) return;
@@ -273,7 +302,6 @@ function Chatbot() {
     setIsHumanLoading(false);
   };
 
-  // Enter key handler
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -291,26 +319,12 @@ function Chatbot() {
     }
   }, [activeTab, conversationId]);
 
-  useEffect(() => {
-    let interval;
-
-    if (activeTab === "human" && conversationId) {
-      fetchHumanMessages(conversationId);
-
-      // interval = setInterval(() => {
-      //   fetchHumanMessages(conversationId);
-      // }, 5000); 
-    }
-
-    return () => clearInterval(interval);
-  }, [activeTab, conversationId]);
-
   const sendHumanMessage = async () => {
     if (!input.trim() || !conversationId) return;
 
     const userMessage = input;
 
-    // ✅ Optimistic UI (instant show)
+    // Optimistic UI: Append the new message immediately
     const tempMessage = {
       text: userMessage,
       messageById: userId,
@@ -329,7 +343,7 @@ function Chatbot() {
           },
           body: JSON.stringify({
             message: userMessage,
-            messageById: userId, // 🔥 IMPORTANT
+            messageById: userId,
             conversationId: conversationId
           })
         }
@@ -338,17 +352,15 @@ function Chatbot() {
       const result = await response.json();
       console.log("Send Message Result:", result);
 
-      // ✅ Optional: re-fetch to sync with DB
-      fetchHumanMessages(conversationId);
 
     } catch (error) {
       console.error("Send message error:", error);
     }
   };
 
+
   return (
     <div className="chatbotContainer">
-
       <div className="chatHeader">
         <div className="headerLeft">
           <span>AI Support</span>
@@ -381,32 +393,34 @@ function Chatbot() {
         </div>
       )}
 
-
       <div className="chatMessages">
-
-        {/* 🔹 AI CHAT */}
-        {activeTab === "ai" &&
-          messages.map((msg, index) => (
-            <div key={index} className={`messageRow ${msg.sender}`}>
-              {msg.sender === "bot" && (
-                <div className="botIcon">
-                  <BotIcon isTyping={false} />
-                </div>
-              )}
-
-              <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
-                {msg.sender === "bot" ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.text}
-                  </ReactMarkdown>
-                ) : (
-                  msg.text
+        {/* AI CHAT */}
+        {activeTab === "ai" && (
+          <>
+            {messages.map((msg, index) => (
+              <div key={index} className={`messageRow ${msg.sender}`}>
+                {msg.sender === "bot" && (
+                  <div className="botIcon">
+                    <BotIcon isTyping={false} />
+                  </div>
                 )}
+                <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
+                  {msg.sender === "bot" ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.text}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.text
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+            <div ref={aiMessagesEndRef} />
+          </>
+        )}
 
-        {/* 🔹 HUMAN CHAT */}
+
+        {/* HUMAN CHAT */}
         {activeTab === "human" && (
           <div className="humanChatContainer">
             {isHumanLoading ? (
@@ -414,34 +428,33 @@ function Chatbot() {
             ) : humanMessages.length === 0 ? (
               <p>No messages yet</p>
             ) : (
-              humanMessages.map((msg, index) => {
-                const isUser = msg.messageById === userId;
-
-                return (
-                  <div key={index} className={`messageRow ${isUser ? "user" : "bot"}`}>
-
-                    {!isUser && (
+              <>
+                {humanMessages.map((msg, index) => (
+                  <div key={index} className={`messageRow ${msg.messageById == userId ? "user" : "bot"}`}>
+                    {!msg.messageById == userId && (
                       <div className="botIcon">
                         <BotIcon isTyping={false} />
                       </div>
                     )}
-
-                    <div className={`messageBubble ${isUser ? "py" : ""}`}>
+                    <div className={`messageBubble ${msg.messageById == userId ? "py" : ""}`}>
                       {msg.text}
                     </div>
                   </div>
-                );
-              })
+                ))}
+                <div ref={humanMessagesEndRef} />
+              </>
             )}
           </div>
+
         )}
+
+
 
         {isLoading && activeTab === "ai" && (
           <div className="messageRow bot">
             <div className="botIcon">
               <BotIcon isTyping={true} />
             </div>
-
             <div className="messageBubble typing-container">
               <div className="typing-dots">
                 Thinking <span>.</span><span>.</span><span>.</span>
@@ -449,8 +462,6 @@ function Chatbot() {
             </div>
           </div>
         )}
-
-        <div ref={messagesEndRef}></div>
       </div>
 
       <div className="chatInputArea">
@@ -465,16 +476,15 @@ function Chatbot() {
           className="auto-expand-input"
         />
 
-        <button onClick={sendMessage} disabled={isLoading || !activeUrl}>
+        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl}>
           <Send size={18} />
         </button>
       </div>
 
-      {/* 🔹 HUMAN CONNECT DRAWER */}
+      {/* HUMAN CONNECT DRAWER */}
       {showHumanDrawer && (
         <div className="humanDrawerOverlay">
           <div className="humanDrawer">
-
             <h3>Connect With Human</h3>
             <p>Please enter your email and our team will contact you.</p>
 
@@ -495,11 +505,9 @@ function Chatbot() {
             >
               Close
             </button>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

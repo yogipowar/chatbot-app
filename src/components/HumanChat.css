@@ -1,4 +1,3 @@
-/* ===== Page Layout ===== */
 .human-chat-page {
   padding: 20px 30px;
   background: #f5f7fb;
@@ -13,14 +12,12 @@
   color: #1f2937;
 }
 
-/* ===== Conversation List ===== */
 .conversation-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
-/* ===== Conversation Card ===== */
 .conversation-card {
   background: #ffffff;
   border-radius: 14px;
@@ -37,7 +34,6 @@
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
-/* ===== Header ===== */
 .conv-header {
   display: flex;
   justify-content: space-between;
@@ -50,7 +46,6 @@
   color: #6b7280;
 }
 
-/* ===== Status ===== */
 .status {
   font-size: 11px;
   padding: 4px 10px;
@@ -69,7 +64,6 @@
   color: #10b981;
 }
 
-/* ===== Message ===== */
 .conv-message {
   font-size: 15px;
   color: #111827;
@@ -77,14 +71,12 @@
   line-height: 1.4;
   font-weight: 500;
 
-  /* limit text */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* ===== Footer ===== */
 .conv-footer {
   display: flex;
   justify-content: space-between;
@@ -96,7 +88,6 @@
   color: #9ca3af;
 }
 
-/* ===== Badge ===== */
 .badge {
   background: #ef4444;
   color: white;
@@ -107,7 +98,6 @@
   font-weight: 600;
 }
 
-/* ===== Loading / Empty ===== */
 .loading-text,
 .error-text {
   font-size: 14px;
@@ -116,7 +106,6 @@
   margin-top: 40px;
 }
 
-/* ===== Layout ===== */
 .chat-layout {
   display: flex;
     flex: 1;
@@ -125,7 +114,6 @@
   background: #f5f7fb;
 }
 
-/* ===== Sidebar ===== */
 .chat-sidebar {
   width: 300px;
   background: #ffffff;
@@ -138,7 +126,6 @@
   margin-bottom: 10px;
 }
 
-/* ===== Chat Item ===== */
 .chat-item {
   padding: 10px;
   border-radius: 10px;
@@ -168,28 +155,24 @@
   color: #555;
 }
 
-/* ===== Right Chat ===== */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Header */
 .chat-header {
   padding: 15px;
   background: white;
   border-bottom: 1px solid #eee;
 }
 
-/* Messages */
 .chat-messages {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-/* Chat bubbles */
 .chat-bubble {
   max-width: 60%;
   padding: 10px 14px;
@@ -209,7 +192,6 @@
   align-self: flex-end;
 }
 
-/* Input */
 .chat-input {
   display: flex;
   padding: 10px;
@@ -234,7 +216,6 @@
   cursor: pointer;
 }
 
-/* Badge */
 .badge {
   background: red;
   color: white;
@@ -249,7 +230,19 @@
     background: #f5f7fb;
 }
 
-/* ===== Responsive ===== */
+.msg-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.msg-row.left {
+    justify-content: flex-start;
+}
+
+.msg-row.right {
+    justify-content: flex-end;
+}
+
 @media (max-width: 768px) {
   .human-chat-page {
     padding: 15px;

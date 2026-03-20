@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./HumanChat.css";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ const HumanChat = () => {
     const [input, setInput] = useState("");
     const adminId = 13;
     const navigate = useNavigate();
-
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const fetchConversations = async () => {
         setLoading(true);
@@ -111,6 +111,11 @@ const HumanChat = () => {
         navigate("/");
     };
 
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+
     return (
         <>
             <div className="human-chat-layout">
@@ -162,14 +167,17 @@ const HumanChat = () => {
                                         const isAdmin = msg.messageById === adminId;
 
                                         return (
-                                            <div
-                                                key={i}
-                                                className={`chat-bubble ${isAdmin ? "right" : "left"}`}
-                                            >
-                                                {msg.text}
+                                            <div className={`msg-row ${isAdmin ? "right" : "left"}`} key={i}>
+                                                <div
+                                                    key={i}
+                                                    className={`chat-bubble ${isAdmin ? "right" : "left"}`}
+                                                >
+                                                    {msg.text}
+                                                </div>
                                             </div>
                                         );
                                     })}
+                                    <div ref={messagesEndRef} />
                                 </div>
 
                                 {/* INPUT */}
