@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import { Send, User  } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./chatbot.css";
@@ -50,11 +50,11 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '13';
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = '13';
+
+    // const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
@@ -155,7 +155,14 @@ function Chatbot() {
 
       // Detect human connect
       if (botResponse === "CONNECTING TO HUMAN") {
-        setShowHumanDrawer(true);
+        if (hasHumanChat && conversationId) {
+          // Already connected → just switch tab
+          setActiveTab("human");
+          fetchHumanMessages(conversationId); 
+        } else {
+          // First time → show email drawer
+          setShowHumanDrawer(true);
+        }
       }
 
     } catch (e) {
@@ -366,26 +373,19 @@ function Chatbot() {
           <span>AI Support</span>
         </div>
 
-        <button
-          className="humanConnectBtn"
-          onClick={() =>
-            window.open("https://scrollosoft.com/contact", "_blank")
-          }
-        >
-          <span>Human Connect</span>
-        </button>
+
       </div>
 
       {hasHumanChat && (
         <div className="chatTabs">
           <button
-            className={activeTab === "ai" ? "activeTab" : ""}
+            className={`aiTab ${activeTab === "ai" ? "activeTab" : ""}`}
             onClick={() => setActiveTab("ai")}
           >
             AI Chat
           </button>
           <button
-            className={activeTab === "human" ? "activeTab" : ""}
+            className={`humanTab ${activeTab === "human" ? "activeTab" : ""}`}
             onClick={() => setActiveTab("human")}
           >
             Human Chat
@@ -431,13 +431,16 @@ function Chatbot() {
               <>
                 {humanMessages.map((msg, index) => (
                   <div key={index} className={`messageRow ${msg.messageById == userId ? "user" : "bot"}`}>
-                    {!msg.messageById == userId && (
+                    {msg.messageById == websiteId && (
                       <div className="botIcon">
-                        <BotIcon isTyping={false} />
+                        {/* <BotIcon isTyping={false} /> */}
+                        <User size={18} />
                       </div>
                     )}
-                    <div className={`messageBubble ${msg.messageById == userId ? "py" : ""}`}>
-                      {msg.text}
+                    <div className={`messageBubble `}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.text}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 ))}
@@ -494,17 +497,18 @@ function Chatbot() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+            <div className="drawerButtons">
+              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </button>
 
-            <button onClick={submitHumanRequest} disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </button>
-
-            <button
-              className="drawerClose"
-              onClick={() => setShowHumanDrawer(false)}
-            >
-              Close
-            </button>
+              <button
+                className="drawerClose"
+                onClick={() => setShowHumanDrawer(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

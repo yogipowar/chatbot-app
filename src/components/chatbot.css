@@ -382,20 +382,51 @@ p {
 }
 
 .chatTabs {
-  display: flex;
-  border-bottom: 1px solid #ddd;
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
 }
 
 .chatTabs button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: #f5f5f5;
-  cursor: pointer;
+    flex: 1;
+    padding: 7px;
+    border: none;
+    background: #ddd;
+    cursor: pointer;
+    font-size: 14px;
+
+}
+
+.aiTab {
+    border-radius: 8px 0 0 8px;
+}
+.humanTab {
+    border-radius: 0 8px 8px 0;
 }
 
 .chatTabs .activeTab {
-  background: white;
-  font-weight: bold;
-  border-bottom: 2px solid black;
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+button:focus,
+button:focus-visible {
+    outline: 0 solid transparent !important;
+    outline-offset: 2px;
+}
+
+.drawerButtons{
+    display: flex;
+    gap: 10px;
+}
+
+.drawerSubmit{
+    background: var(--brand-gradient);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.personIcon {
+  background: #e5e7eb;
+  border-radius: 50%;
+  padding: 6px;
 }

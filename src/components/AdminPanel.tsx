@@ -16,6 +16,14 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // ✅ Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
+
+  // ✅ Search
+  const [searchTerm, setSearchTerm] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +45,7 @@ const AdminPanel = () => {
 
       if (data.success) {
         setUsers(data.data);
+        setCurrentPage(1);
       } else {
         setError("Failed to fetch users");
       }
@@ -64,6 +73,21 @@ const AdminPanel = () => {
     });
   };
 
+  // ✅ Filter users (SEARCH)
+  const filteredUsers = users.filter((user) =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ✅ Pagination logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(
+    indexOfFirstUser,
+    indexOfLastUser
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
   return (
     <div className="admin-layout">
       <AdminSidebar onLogout={handleLogout} />
@@ -81,57 +105,119 @@ const AdminPanel = () => {
         </header>
 
         <div className="admin-content">
+          {/* ✅ Search */}
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search by username..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
           {loading ? (
             <div className="loading-text">Loading...</div>
           ) : error ? (
             <div className="error-text">{error}</div>
           ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Username</th>
-                  <th>Resource</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.id}</td>
-
-                    <td>{user.username}</td>
-
-                    <td>
-                      {user.pdfUrl ? (
-                        <a
-                          className="resource-link"
-                          href={user.pdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          📄 Download PDF
-                        </a>
-                      ) : user.sitemapUrl ? (
-                        <a
-                          className="resource-link"
-                          href={user.sitemapUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          🌐 Open Sitemap
-                        </a>
-                      ) : (
-                        <span>—</span>
-                      )}
-                    </td>
-
-                    <td>{formatDate(user.createdAt)}</td>
+            <>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Resource</th>
+                    <th>Created</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {currentUsers.length > 0 ? (
+                    currentUsers.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+
+                        <td>{user.username}</td>
+
+                        <td>
+                          {user.pdfUrl ? (
+                            <a
+                              className="resource-link"
+                              href={user.pdfUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              📄 Download PDF
+                            </a>
+                          ) : user.sitemapUrl ? (
+                            <a
+                              className="resource-link"
+                              href={user.sitemapUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              🌐 Open Sitemap
+                            </a>
+                          ) : (
+                            <span>—</span>
+                          )}
+                        </td>
+
+                        <td>{formatDate(user.createdAt)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: "center" }}>
+                        No users found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* ✅ Pagination */}
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) => prev - 1)
+                    }
+                  >
+                    Prev
+                  </button>
+
+                  {[...Array(totalPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={
+                        currentPage === index + 1
+                          ? "active-page"
+                          : ""
+                      }
+                      onClick={() =>
+                        setCurrentPage(index + 1)
+                      }
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) => prev + 1)
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -154,11 +240,15 @@ interface AddAdminModalProps {
   onSuccess: () => void;
 }
 
-const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
+const AddAdminModal = ({
+  onClose,
+  onSuccess,
+}: AddAdminModalProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [resourceType, setResourceType] = useState<"pdf" | "sitemap">("pdf");
+  const [resourceType, setResourceType] =
+    useState<"pdf" | "sitemap">("pdf");
 
   const [sitemapValue, setSitemapValue] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -166,7 +256,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleResourceChange = (type: "pdf" | "sitemap") => {
+  const handleResourceChange = (
+    type: "pdf" | "sitemap"
+  ) => {
     setResourceType(type);
     setPdfFile(null);
     setSitemapValue("");
@@ -243,7 +335,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
             <input
               type="email"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
               placeholder="admin@example.com"
               required
             />
@@ -255,7 +349,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               placeholder="Enter password"
               required
             />
@@ -269,7 +365,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
                 <input
                   type="radio"
                   checked={resourceType === "pdf"}
-                  onChange={() => handleResourceChange("pdf")}
+                  onChange={() =>
+                    handleResourceChange("pdf")
+                  }
                 />
                 Upload PDF
               </label>
@@ -278,7 +376,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
                 <input
                   type="radio"
                   checked={resourceType === "sitemap"}
-                  onChange={() => handleResourceChange("sitemap")}
+                  onChange={() =>
+                    handleResourceChange("sitemap")
+                  }
                 />
                 Sitemap URL
               </label>
@@ -294,7 +394,9 @@ const AddAdminModal = ({ onClose, onSuccess }: AddAdminModalProps) => {
                   type="file"
                   accept=".pdf"
                   onChange={(e) =>
-                    setPdfFile(e.target.files?.[0] || null)
+                    setPdfFile(
+                      e.target.files?.[0] || null
+                    )
                   }
                 />
 

@@ -136,7 +136,7 @@ const HumanChat = () => {
                                 onClick={() => handleSelectConversation(conv)}
                             >
                                 <div className="chat-item-header">
-                                    <span>User {conv.userId}</span>
+                                    <span className="username">User {conv.userId}</span>
 
                                     {conv.messageStatus === "unread" && (
                                         <span className="badge">New</span>
@@ -186,6 +186,12 @@ const HumanChat = () => {
                                         type="text"
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault(); 
+                                                sendMessage();
+                                            }
+                                        }}
                                         placeholder="Type message..."
                                     />
 
