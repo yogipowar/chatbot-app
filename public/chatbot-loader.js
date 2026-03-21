@@ -37,7 +37,7 @@
         position: "fixed",
         bottom: "75px",
         right: "20px",
-        width: "385px",
+        width: "380px",
         height: "500px",
         border: "none",
         borderRadius: "16px",

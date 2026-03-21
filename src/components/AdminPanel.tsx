@@ -27,6 +27,28 @@ const AdminPanel = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const role = localStorage.getItem("role");
+
+    // ✅ Role 2 → always go to Human Chat
+    if (role === "2") {
+      navigate(
+        `/human-chat?websiteId=${localStorage.getItem("websiteId")}`,
+        { replace: true }
+      );
+    }
+
+    // ✅ Role 1 → stay on admin
+    if (role === "1") {
+      navigate("/admin", { replace: true });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  useEffect(() => {
     if (localStorage.getItem("isLoggedIn") !== "true") {
       navigate("/");
     }
@@ -60,10 +82,6 @@ const AdminPanel = () => {
     fetchUsers();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    navigate("/");
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {

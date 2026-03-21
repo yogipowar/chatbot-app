@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, User  } from "lucide-react";
+import { Send, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./chatbot.css";
 import BotIcon from "./BotIcon";
+import { socket } from "../components/socket"
 
 function Chatbot() {
   const [messages, setMessages] = useState([
@@ -51,7 +52,7 @@ function Chatbot() {
 
   useEffect(() => {
     // const params = new URLSearchParams(window.location.search);
-    // const id = '13';
+    // const id = '33';
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
@@ -158,7 +159,7 @@ function Chatbot() {
         if (hasHumanChat && conversationId) {
           // Already connected → just switch tab
           setActiveTab("human");
-          fetchHumanMessages(conversationId); 
+          fetchHumanMessages(conversationId);
         } else {
           // First time → show email drawer
           setShowHumanDrawer(true);
@@ -184,7 +185,23 @@ function Chatbot() {
     setIsSubmitting(true);
 
     try {
-      // USER AUTH
+
+      if (!socket.id) {
+        console.log("Socket ID null, waiting for connection...");
+        await new Promise((resolve) => {
+          socket.once("connect", () => {
+            resolve();
+          });
+
+          if (socket.connected) resolve();
+
+          setTimeout(resolve, 3000);
+        });
+      }
+
+      const currentSocketId = socket.id;
+      console.log("Using Socket ID:", currentSocketId);
+
       const authResponse = await fetch(
         "https://chatbotapi.scrollosoft.com/users/user-auth",
         {
@@ -194,7 +211,8 @@ function Chatbot() {
           },
           body: JSON.stringify({
             username: email,
-            password: email
+            password: email,
+            socketId: socket.id
           })
         }
       );
@@ -202,10 +220,12 @@ function Chatbot() {
       const authResult = await authResponse.json();
       console.log("Auth Result:", authResult);
 
+
       if (authResult?.status && authResult?.user?.id) {
         const userId = authResult.user.id;
         setUserId(userId);
         localStorage.setItem("userId", userId);
+        localStorage.setItem("userEmail", email);
 
         setShowHumanDrawer(false);
         setEmail("");
@@ -309,6 +329,75 @@ function Chatbot() {
     setIsHumanLoading(false);
   };
 
+  // 1. Add this Ref at the top with your other hooks
+  const convIdRef = useRef(conversationId);
+
+  // 2. Keep the Ref in sync with the state
+  useEffect(() => {
+    convIdRef.current = conversationId;
+  }, [conversationId]);
+
+  // 3. The Updated Listener
+  useEffect(() => {
+    const handleIncomingMessage = async (data) => {
+      console.log("🔥 Incoming:", data);
+
+      const currentId = convIdRef.current;
+
+      if (currentId) {
+        // ✅ Fetch latest messages
+        const response = await fetch(
+          `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${currentId}`
+        );
+
+        const result = await response.json();
+
+        if (result?.status) {
+          setHumanMessages(result.data || []);
+        }
+      }
+    };
+
+    socket.on("receive_message", handleIncomingMessage);
+
+    return () => {
+      socket.off("receive_message", handleIncomingMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleConnect = async () => {
+      console.log("✅ User Connected:", socket.id);
+
+      const savedEmail = localStorage.getItem("userEmail");
+
+      if (savedEmail) {
+        await fetch(
+          "https://chatbotapi.scrollosoft.com/users/user-auth",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: savedEmail,
+              password: savedEmail,
+              socketId: socket.id,
+            }),
+          }
+        );
+
+        console.log("✅ User re-auth done");
+      }
+    };
+
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("connect", handleConnect);
+    };
+  }, []);
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -319,6 +408,14 @@ function Chatbot() {
       }
     }
   };
+
+  useEffect(() => {
+    const container = humanMessagesEndRef.current;
+
+    if (container) {
+      container.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [humanMessages.length]); // 👈 only when new msg count changes
 
   useEffect(() => {
     if (activeTab === "human" && conversationId) {
@@ -365,6 +462,33 @@ function Chatbot() {
     }
   };
 
+  useEffect(() => {
+  const handleConnect = async () => {
+    console.log("👤 User Connected:", socket.id);
+
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (userEmail) {
+      await fetch("https://chatbotapi.scrollosoft.com/users/user-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: userEmail,
+          password: userEmail,
+          socketId: socket.id,
+        }),
+      });
+
+      console.log("✅ User socket mapped");
+    }
+  };
+
+  socket.on("connect", handleConnect);
+
+  return () => {
+    socket.off("connect", handleConnect);
+  };
+}, []);
 
   return (
     <div className="chatbotContainer">

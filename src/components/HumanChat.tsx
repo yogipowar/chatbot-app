@@ -2,207 +2,205 @@ import { useEffect, useState, useRef } from "react";
 import "./HumanChat.css";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
-
-interface Conversation {
-    id: number;
-    userId: number;
-    status: string;
-    messageText: string;
-    messageCreatedAt: string;
-    conversationId: number;
-    messageStatus: string;
-}
+import { socket } from "../components/socket";
 
 const HumanChat = () => {
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedConversation, setSelectedConversation] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState("");
-    const adminId = 13;
-    const navigate = useNavigate();
+
+    // This is the source of truth for the socket
+    const selectedIdRef = useRef<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const fetchConversations = async () => {
-        setLoading(true);
+    const adminId = Number(localStorage.getItem("adminId"));
+    const navigate = useNavigate();
 
+    // --- API: Fetch Sidebar ---
+    const fetchConversations = async () => {
         try {
             const res = await fetch(
                 `https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`
             );
-
             const data = await res.json();
 
-            console.log("Admin Conversations:", data);
+            if (data.status && data.data.length > 0) {
+                setConversations(data.data);
 
-            if (data?.status) {
-                const sortedData = (data.data || []).sort(
-                    (a: { messageCreatedAt: string | number | Date; }, b: { messageCreatedAt: string | number | Date; }) =>
-                        new Date(b.messageCreatedAt).getTime() -
-                        new Date(a.messageCreatedAt).getTime()
-                );
+                // ✅ Get first conversation id (or selected logic)
+                const firstConvId = data.data[0].id;
 
-                setConversations(sortedData);
-            }
-        } catch (error) {
-            console.error("Error:", error);
-        }
+                console.log("📌 Conversation ID:", firstConvId);
 
-        setLoading(false);
-    };
-
-    const handleSelectConversation = async (conv: any) => {
-        setSelectedConversation(conv);
-
-        try {
-            const res = await fetch(
-                `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${conv.conversationId}`
-            );
-
-            const data = await res.json();
-
-            if (data?.status) {
-                setMessages(data.data || []);
+                // ✅ Call message API immediately
+                fetchMessages(firstConvId);
             }
         } catch (err) {
-            console.error(err);
+            console.error("❌ Error fetching conversations:", err);
         }
+    };
+
+    // --- API: Fetch Messages ---
+    const fetchMessages = async (conversationId: number | string) => {
+        try {
+            const res = await fetch(
+                `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${conversationId}`
+            );
+            const data = await res.json();
+
+            console.log("💬 Messages:", data);
+
+            if (data.status) {
+                setMessages(data.data);
+            }
+        } catch (err) {
+            console.error("❌ Error fetching messages:", err);
+        }
+    };
+
+    const handleSelectConversation = (conv: any) => {
+        const cid = conv.conversationId.toString();
+        setSelectedConversation(conv);
+        selectedIdRef.current = cid;
+        fetchMessages(cid);
     };
 
     const sendMessage = async () => {
         if (!input.trim() || !selectedConversation) return;
-
         const text = input;
+        const convId = selectedConversation.conversationId;
 
-        // 🔥 Optimistic UI
-        setMessages((prev) => [
-            ...prev,
-            { text, messageById: adminId }
-        ]);
-
+        setMessages((prev) => [...prev, { text, messageById: adminId }]);
         setInput("");
 
         try {
-            await fetch(
-                "https://chatbotapi.scrollosoft.com/conversation/send-message",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: text,
-                        messageById: adminId,
-                        conversationId: selectedConversation.conversationId
-                    })
-                }
-            );
-        } catch (err) {
-            console.error(err);
-        }
+            await fetch("https://chatbotapi.scrollosoft.com/conversation/send-message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, messageById: adminId, conversationId: convId }),
+            });
+            // fetchMessages(convId);
+        } catch (err) { console.error("Send Error:", err); }
     };
 
-    useEffect(() => {
-        fetchConversations();
-    }, []);
+    useEffect(() => { fetchConversations(); }, []);
+    useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-    const handleLogout = () => {
-        localStorage.removeItem("isLoggedIn");
-        navigate("/");
+    // --- THE SOCKET LISTENER (FIXED) ---
+   useEffect(() => {
+    const attachListener = () => {
+        console.log("🎧 Attaching listener with socket:", socket.id);
+
+        const handleIncomingMessage = (data: any) => {
+            console.log("📥 SOCKET EVENT:", data);
+
+            fetchConversations();
+
+            const currentOpenId = selectedIdRef.current?.toString();
+            const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
+
+            if (currentOpenId && incomingConvId && currentOpenId === incomingConvId) {
+                fetchMessages(currentOpenId);
+            }
+        };
+
+        socket.on("receive_message", handleIncomingMessage);
+
+        return () => {
+            socket.off("receive_message", handleIncomingMessage);
+        };
     };
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    if (socket.connected) {
+        // ✅ already connected
+        return attachListener();
+    } else {
+        // ⏳ wait for connect
+        socket.once("connect", () => {
+            attachListener();
+        });
+    }
+}, []);
 
+
+useEffect(() => {
+  const handleConnect = async () => {
+    console.log("🧑‍💼 Admin Connected:", socket.id);
+
+    const email = localStorage.getItem("adminemail");
+    const password = localStorage.getItem("adminpassword");
+
+    if (email && password) {
+      await fetch("https://chatbotapi.scrollosoft.com/users/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: email,
+          password: password,
+          socketId: socket.id,
+        }),
+      });
+
+      console.log("✅ Admin socket mapped");
+    }
+  };
+
+  socket.on("connect", handleConnect);
+
+  return () => {
+    socket.off("connect", handleConnect);
+  };
+}, []);
 
     return (
-        <>
-            <div className="human-chat-layout">
-                <AdminSidebar onLogout={handleLogout} />
-                <div className="chat-layout">
-
-                    {/* 🔹 LEFT SIDEBAR */}
-                    <div className="chat-sidebar">
-                        <h3>Conversations</h3>
-
-                        {conversations.map((conv) => (
-                            <div
-                                key={conv.id}
-                                className={`chat-item ${selectedConversation?.conversationId === conv.conversationId
-                                    ? "active"
-                                    : ""
-                                    }`}
-                                onClick={() => handleSelectConversation(conv)}
-                            >
-                                <div className="chat-item-header">
-                                    <span className="username">User {conv.userId}</span>
-
-                                    {conv.messageStatus === "unread" && (
-                                        <span className="badge">New</span>
-                                    )}
-                                </div>
-
-                                <p>{conv.messageText}</p>
+        <div className="human-chat-layout">
+            <AdminSidebar onLogout={() => { localStorage.removeItem("isLoggedIn"); navigate("/"); }} />
+            <div className="chat-layout">
+                <div className="chat-sidebar">
+                    <h3>Conversations</h3>
+                    {conversations.map((conv) => (
+                        <div
+                            key={conv.id}
+                            className={`chat-item ${selectedConversation?.conversationId?.toString() === conv.conversationId?.toString() ? "active" : ""}`}
+                            onClick={() => handleSelectConversation(conv)}
+                        >
+                            <div className="chat-item-header">
+                                <span className="username">User {conv.userId}</span>
+                                {conv.messageStatus === "unread" && <span className="badge">New</span>}
                             </div>
-                        ))}
-                    </div>
+                            <p>{conv.messageText}</p>
+                        </div>
+                    ))}
+                </div>
 
-                    {/* 🔹 RIGHT CHAT AREA */}
-                    <div className="chat-main">
-                        {!selectedConversation ? (
-                            <div className="no-chat">
-                                Select a conversation
+                <div className="chat-main">
+                    {!selectedConversation ? (
+                        <div className="no-chat">Select a conversation</div>
+                    ) : (
+                        <>
+                            <div className="chat-header"><h4>User {selectedConversation.userId}</h4></div>
+                            <div className="chat-messages">
+                                {messages.map((msg, i) => (
+                                    <div className={`msg-row ${Number(msg.messageById) === adminId ? "right" : "left"}`} key={i}>
+                                        <div className={`chat-bubble ${Number(msg.messageById) === adminId ? "right" : "left"}`}>
+                                            {/* Key names vary between API and Socket payload */}
+                                            {msg.text || msg.messageText}
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
                             </div>
-                        ) : (
-                            <>
-                                {/* HEADER */}
-                                <div className="chat-header">
-                                    <h4>User {selectedConversation.userId}</h4>
-                                </div>
-
-                                {/* MESSAGES */}
-                                <div className="chat-messages">
-                                    {messages.map((msg, i) => {
-                                        const isAdmin = msg.messageById === adminId;
-
-                                        return (
-                                            <div className={`msg-row ${isAdmin ? "right" : "left"}`} key={i}>
-                                                <div
-                                                    key={i}
-                                                    className={`chat-bubble ${isAdmin ? "right" : "left"}`}
-                                                >
-                                                    {msg.text}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    <div ref={messagesEndRef} />
-                                </div>
-
-                                {/* INPUT */}
-                                <div className="chat-input">
-                                    <input
-                                        type="text"
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter") {
-                                                e.preventDefault(); 
-                                                sendMessage();
-                                            }
-                                        }}
-                                        placeholder="Type message..."
-                                    />
-
-                                    <button onClick={sendMessage}>Send</button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                            <div className="chat-input">
+                                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Type message..." />
+                                <button onClick={sendMessage}>Send</button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
