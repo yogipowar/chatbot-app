@@ -3,6 +3,8 @@ import "./HumanChat.css";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../components/socket";
+import { useSound } from 'react-sounds';
+import notification from "../../public/notification1.mp3"
 
 const HumanChat = () => {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -17,6 +19,7 @@ const HumanChat = () => {
 
     const adminId = Number(localStorage.getItem("adminId"));
     const navigate = useNavigate();
+    const { play } = useSound(notification);
 
     // --- API: Fetch Sidebar ---
     const fetchConversations = async () => {
@@ -89,70 +92,79 @@ const HumanChat = () => {
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
     // --- THE SOCKET LISTENER (FIXED) ---
-   useEffect(() => {
-    const attachListener = () => {
-        console.log("🎧 Attaching listener with socket:", socket.id);
+    useEffect(() => {
+        const attachListener = () => {
+            console.log("🎧 Attaching listener with socket:", socket.id);
+            // alert("socket received");
+            const handleIncomingMessage = (data: any) => {
+                console.log("📥 SOCKET EVENT:", data);
 
-        const handleIncomingMessage = (data: any) => {
-            console.log("📥 SOCKET EVENT:", data);
+                fetchConversations();
 
-            fetchConversations();
+                const currentOpenId = selectedIdRef.current?.toString();
+                const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
 
-            const currentOpenId = selectedIdRef.current?.toString();
-            const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
+                // 🔔 PLAY SOUND ONLY IF MESSAGE FROM USER
+                if (String(data.messageById) !== String(adminId)) {
+                    if (String(data.messageById) !== String(adminId)) {
+                        // alert("sound on")
+                        play();
+                    }
+                }
 
-            if (currentOpenId && incomingConvId && currentOpenId === incomingConvId) {
-                fetchMessages(currentOpenId);
+
+                if (currentOpenId && incomingConvId && currentOpenId === incomingConvId) {
+                    fetchMessages(currentOpenId);
+                }
+            };
+
+            socket.on("receive_message", handleIncomingMessage);
+
+            return () => {
+                socket.off("receive_message", handleIncomingMessage);
+            };
+        };
+
+        if (socket.connected) {
+            // ✅ already connected
+            return attachListener();
+        } else {
+            // ⏳ wait for connect
+            socket.once("connect", () => {
+                attachListener();
+            });
+        }
+    }, []);
+
+
+    useEffect(() => {
+        const handleConnect = async () => {
+            console.log("🧑‍💼 Admin Connected:", socket.id);
+
+            const email = localStorage.getItem("adminemail");
+            const password = localStorage.getItem("adminpassword");
+
+            if (email && password) {
+                await fetch("https://chatbotapi.scrollosoft.com/users/admin-login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: email,
+                        password: password,
+                        socketId: socket.id,
+                    }),
+                });
+
+                console.log("✅ Admin socket mapped");
             }
         };
 
-        socket.on("receive_message", handleIncomingMessage);
+        socket.on("connect", handleConnect);
 
         return () => {
-            socket.off("receive_message", handleIncomingMessage);
+            socket.off("connect", handleConnect);
         };
-    };
-
-    if (socket.connected) {
-        // ✅ already connected
-        return attachListener();
-    } else {
-        // ⏳ wait for connect
-        socket.once("connect", () => {
-            attachListener();
-        });
-    }
-}, []);
-
-
-useEffect(() => {
-  const handleConnect = async () => {
-    console.log("🧑‍💼 Admin Connected:", socket.id);
-
-    const email = localStorage.getItem("adminemail");
-    const password = localStorage.getItem("adminpassword");
-
-    if (email && password) {
-      await fetch("https://chatbotapi.scrollosoft.com/users/admin-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: email,
-          password: password,
-          socketId: socket.id,
-        }),
-      });
-
-      console.log("✅ Admin socket mapped");
-    }
-  };
-
-  socket.on("connect", handleConnect);
-
-  return () => {
-    socket.off("connect", handleConnect);
-  };
-}, []);
+    }, []);
 
     return (
         <div className="human-chat-layout">
@@ -168,7 +180,7 @@ useEffect(() => {
                         >
                             <div className="chat-item-header">
                                 <span className="username">User {conv.userId}</span>
-                                {conv.messageStatus === "unread" && <span className="badge">New</span>}
+                                {/* {conv.messageStatus === "unread" && <span className="badge">New</span>} */}
                             </div>
                             <p>{conv.messageText}</p>
                         </div>

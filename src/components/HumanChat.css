@@ -162,6 +162,10 @@
   text-overflow: ellipsis; 
 }
 
+.no-chat{
+    margin-top: 40%;
+}
+
 .chat-main {
   flex: 1;
   display: flex;

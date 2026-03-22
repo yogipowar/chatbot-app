@@ -5,6 +5,8 @@ import remarkGfm from "remark-gfm";
 import "./chatbot.css";
 import BotIcon from "./BotIcon";
 import { socket } from "../components/socket"
+import { useSound } from "react-sounds";
+import notification from "../../public/notification2.mp3";
 
 function Chatbot() {
   const [messages, setMessages] = useState([
@@ -30,7 +32,7 @@ function Chatbot() {
 
   const aiMessagesEndRef = useRef(null);
   const humanMessagesEndRef = useRef(null);
-
+  const { play } = useSound(notification);
 
   useEffect(() => {
     const savedHasHumanChat = localStorage.getItem("hasHumanChat");
@@ -51,11 +53,11 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '33';
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = '36';
+
+    // const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
@@ -343,9 +345,15 @@ function Chatbot() {
       console.log("🔥 Incoming:", data);
 
       const currentId = convIdRef.current;
+      const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
 
+      // ✅ PLAY SOUND only when message is from ADMIN (not user)
+       if (String(data.messageById) !== String(userId)) {
+      play();
+      }
+
+      // ✅ Only update messages if same conversation
       if (currentId) {
-        // ✅ Fetch latest messages
         const response = await fetch(
           `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${currentId}`
         );
@@ -359,7 +367,10 @@ function Chatbot() {
     };
 
     socket.on("receive_message", handleIncomingMessage);
-
+    // ✅ PLAY SOUND only when message is from ADMIN (not user)
+    // if (String(data.messageById) !== String(userId)) {
+    // play();
+    // }
     return () => {
       socket.off("receive_message", handleIncomingMessage);
     };
@@ -463,32 +474,32 @@ function Chatbot() {
   };
 
   useEffect(() => {
-  const handleConnect = async () => {
-    console.log("👤 User Connected:", socket.id);
+    const handleConnect = async () => {
+      console.log("👤 User Connected:", socket.id);
 
-    const userEmail = localStorage.getItem("userEmail");
+      const userEmail = localStorage.getItem("userEmail");
 
-    if (userEmail) {
-      await fetch("https://chatbotapi.scrollosoft.com/users/user-auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: userEmail,
-          password: userEmail,
-          socketId: socket.id,
-        }),
-      });
+      if (userEmail) {
+        await fetch("https://chatbotapi.scrollosoft.com/users/user-auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: userEmail,
+            password: userEmail,
+            socketId: socket.id,
+          }),
+        });
 
-      console.log("✅ User socket mapped");
-    }
-  };
+        console.log("✅ User socket mapped");
+      }
+    };
 
-  socket.on("connect", handleConnect);
+    socket.on("connect", handleConnect);
 
-  return () => {
-    socket.off("connect", handleConnect);
-  };
-}, []);
+    return () => {
+      socket.off("connect", handleConnect);
+    };
+  }, []);
 
   return (
     <div className="chatbotContainer">
