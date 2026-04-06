@@ -60,6 +60,11 @@ const LoginPage = () => {
         localStorage.setItem("adminemail", email);
         localStorage.setItem("adminpassword", password);
         localStorage.setItem("adminId", data.user.id);
+        // localStorage.setItem(
+        //   "subscription_status",
+        //   data.user.subscription_status
+        // );
+        localStorage.setItem("createdAt", data.user.createdAt);
 
         navigate("/admin");
       } else {

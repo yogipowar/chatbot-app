@@ -30,9 +30,16 @@ const AdminPanel = () => {
     const role = localStorage.getItem("role");
 
     // ✅ Role 2 → always go to Human Chat
+    // if (role === "2") {
+    //   navigate(
+    //     `/human-chat?websiteId=${localStorage.getItem("websiteId")}`,
+    //     { replace: true }
+    //   );
+    // }
+
     if (role === "2") {
       navigate(
-        `/human-chat?websiteId=${localStorage.getItem("websiteId")}`,
+        `/dashboard`,
         { replace: true }
       );
     }

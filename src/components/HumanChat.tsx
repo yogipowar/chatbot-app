@@ -4,7 +4,8 @@ import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../components/socket";
 import { useSound } from 'react-sounds';
-import notification from "../../public/notification1.mp3"
+import notification from "../../public/notification1.mp3";
+import SubscriptionModal from "./SubscriptionModal";
 
 const HumanChat = () => {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -12,7 +13,7 @@ const HumanChat = () => {
     const [selectedConversation, setSelectedConversation] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState("");
-
+    const [statusFilter, setStatusFilter] = useState("pending"); // default
     // This is the source of truth for the socket
     const selectedIdRef = useRef<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,10 @@ const HumanChat = () => {
         }
     };
 
+    const filteredConversations = conversations.filter(
+        (conv) => conv.status === statusFilter
+    );
+
     // --- API: Fetch Messages ---
     const fetchMessages = async (conversationId: number | string) => {
         try {
@@ -63,12 +68,98 @@ const HumanChat = () => {
         }
     };
 
-    const handleSelectConversation = (conv: any) => {
+    // const handleSelectConversation = (conv: any) => {
+    //     const cid = conv.conversationId.toString();
+    //     setSelectedConversation(conv);
+    //     selectedIdRef.current = cid;
+    //     fetchMessages(cid);
+    // };
+
+    const handleSelectConversation = async (conv: any) => {
         const cid = conv.conversationId.toString();
+
         setSelectedConversation(conv);
         selectedIdRef.current = cid;
+
+        try {
+            // ✅ Call correct API: chnage-status
+            if (conv.status === "pending") {
+                const res = await fetch(
+                    `https://chatbotapi.scrollosoft.com/conversation/chnage-status`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            status: "accepted",
+                            conversationId: conv.conversationId,
+                        }),
+                    }
+                );
+
+                const data = await res.json();
+                console.log("✅ Status Update Response:", data);
+            }
+
+            // setConversations((prev) =>
+            //     prev.map((c) =>
+            //         c.conversationId === conv.conversationId
+            //             ? {
+            //                 ...c,
+            //                 messageStatus: "read",
+            //                 status:
+            //                     c.status === "pending"
+            //                         ? "accepted"
+            //                         : c.status,
+            //             }
+            //             : c
+            //     )
+            // );
+        } catch (err) {
+            console.error("❌ Update error:", err);
+        }
+
         fetchMessages(cid);
     };
+
+    const handleCloseConversation = async () => {
+        if (!selectedConversation) return;
+
+        try {
+            const res = await fetch(
+                `https://chatbotapi.scrollosoft.com/conversation/chnage-status`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        status: "closed",
+                        conversationId: selectedConversation.conversationId,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+            console.log("✅ Closed:", data);
+
+            // ✅ Update UI instantly
+            setConversations((prev) =>
+                prev.map((c) =>
+                    c.conversationId === selectedConversation.conversationId
+                        ? { ...c, status: "closed" }
+                        : c
+                )
+            );
+
+            // ✅ Optional: clear chat window
+            setSelectedConversation(null);
+            setMessages([]);
+        } catch (err) {
+            console.error("❌ Close error:", err);
+        }
+    };
+
+    const pendingCount = conversations.filter(c => c.status === "pending").length;
+    const acceptedCount = conversations.filter(c => c.status === "accepted").length;
+    const closedCount = conversations.filter(c => c.status === "closed").length;
 
     const sendMessage = async () => {
         if (!input.trim() || !selectedConversation) return;
@@ -172,7 +263,30 @@ const HumanChat = () => {
             <div className="chat-layout">
                 <div className="chat-sidebar">
                     <h3>Conversations</h3>
-                    {conversations.map((conv) => (
+                    <div className="chat-filters">
+                        <button
+                            className={statusFilter === "pending" ? "active" : ""}
+                            onClick={() => setStatusFilter("pending")}
+                        >
+                            Pending <span> ({pendingCount})</span>
+                        </button>
+
+                        <button
+                            className={statusFilter === "accepted" ? "active" : ""}
+                            onClick={() => setStatusFilter("accepted")}
+                        >
+                            Accepted <span> ({acceptedCount})</span>
+                        </button>
+
+                        <button
+                            className={statusFilter === "closed" ? "active" : ""}
+                            onClick={() => setStatusFilter("closed")}
+                        >
+                            Closed <span> ({closedCount})</span>
+                        </button>
+                    </div>
+
+                    {filteredConversations.map((conv) => (
                         <div
                             key={conv.id}
                             className={`chat-item ${selectedConversation?.conversationId?.toString() === conv.conversationId?.toString() ? "active" : ""}`}
@@ -181,6 +295,9 @@ const HumanChat = () => {
                             <div className="chat-item-header">
                                 <span className="username">User {conv.userId}</span>
                                 {/* {conv.messageStatus === "unread" && <span className="badge">New</span>} */}
+                                {/* {conv.messageStatus === "unread" && (
+                                    <span className="badge">New</span>
+                                )} */}
                             </div>
                             <p>{conv.messageText}</p>
                         </div>
@@ -192,7 +309,13 @@ const HumanChat = () => {
                         <div className="no-chat">Select a conversation</div>
                     ) : (
                         <>
-                            <div className="chat-header"><h4>User {selectedConversation.userId}</h4></div>
+                            <div className="chat-header"><h4>User {selectedConversation.userId}</h4>
+                                {selectedConversation.status !== "closed" && (
+                                    <button onClick={handleCloseConversation} className="close-btn">
+                                        Close Chat
+                                    </button>
+                                )}
+                            </div>
                             <div className="chat-messages">
                                 {messages.map((msg, i) => (
                                     <div className={`msg-row ${Number(msg.messageById) === adminId ? "right" : "left"}`} key={i}>
@@ -205,13 +328,15 @@ const HumanChat = () => {
                                 <div ref={messagesEndRef} />
                             </div>
                             <div className="chat-input">
-                                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Type message..." />
-                                <button onClick={sendMessage}>Send</button>
+                                <input type="text" value={input} disabled={selectedConversation?.status === "closed"} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Type message..." />
+                                <button onClick={sendMessage} disabled={selectedConversation?.status === "closed"}>Send</button>
                             </div>
                         </>
                     )}
                 </div>
             </div>
+
+     
         </div>
     );
 };

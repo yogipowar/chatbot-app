@@ -1,0 +1,565 @@
+/* ===== AI Chatbot Landing Page Styles ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+/* ===== Variables ===== */
+:root {
+    --landing-bg: #06060e;
+    --landing-surface: #0d0d1a;
+    --landing-surface-2: #141428;
+    --landing-border: #1e1e3a;
+    --landing-text: #e4e4f0;
+    --landing-text-muted: #8888a8;
+    --landing-accent: #6c5ce7;
+    --landing-accent-light: #a29bfe;
+    --landing-accent-glow: rgba(108, 92, 231, 0.3);
+    --landing-cyan: #00cec9;
+    --landing-cyan-glow: rgba(0, 206, 201, 0.2);
+    --landing-gradient: linear-gradient(135deg, #6c5ce7, #00cec9);
+    --landing-font-display: 'Space Grotesk', sans-serif;
+    --landing-font-body: 'Inter', sans-serif;
+}
+
+/* ===== Landing Page Container ===== */
+.landing-page {
+    min-height: 100vh;
+    background: var(--landing-bg);
+    color: var(--landing-text);
+    font-family: var(--landing-font-body);
+    overflow-x: hidden;
+}
+
+/* ===== Navigation ===== */
+/* Update these properties in your existing .landing-nav class */
+.landing-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    max-width: 1280px;
+    margin: 0 auto;
+
+    /* Sticky Logic */
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* Ensures it stays above hero elements */
+    background: var(--landing-bg);
+    /* Prevents content from showing through */
+
+    /* Optional: Add a subtle border or glass effect when scrolling */
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.landing-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    max-width: 1280px;
+    margin: 0 auto;
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--landing-bg);
+
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+/* Optional: If you want a "glass" look so it feels premium */
+.landing-nav {
+    backdrop-filter: blur(12px);
+    background: rgba(6, 6, 14, 0.8);
+    /* Your --landing-bg with transparency */
+}
+
+.landing-nav.scrolled {
+    border-bottom: 1px solid var(--landing-border);
+    padding: 15px 48px;
+    /* Slightly shrink for a "compact" feel */
+}
+
+.landing-logo {
+    font-family: var(--landing-font-display);
+    font-size: 24px;
+    font-weight: 700;
+    background: var(--landing-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+}
+
+.landing-nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.landing-nav-links a {
+    color: var(--landing-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.landing-nav-links a:hover {
+    color: var(--landing-text);
+}
+
+.landing-nav-cta {
+    padding: 10px 24px;
+    background: var(--landing-gradient);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--landing-font-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.landing-nav-cta:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ===== Hero Section ===== */
+.landing-hero {
+    text-align: center;
+    padding: 100px 24px 80px;
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.landing-hero::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--landing-accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.landing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--landing-surface);
+    border: 1px solid var(--landing-border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--landing-accent-light);
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.landing-badge-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--landing-cyan);
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.landing-hero h1 {
+    font-family: var(--landing-font-display);
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin: 0 0 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.landing-hero h1 span {
+    background: var(--landing-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.landing-hero p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--landing-text-muted);
+    max-width: 580px;
+    margin: 0 auto 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.landing-hero-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-primary {
+    padding: 14px 32px;
+    background: var(--landing-gradient);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--landing-font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--landing-accent-glow);
+}
+
+.btn-secondary {
+    padding: 14px 32px;
+    background: transparent;
+    border: 1px solid var(--landing-border);
+    border-radius: 10px;
+    color: var(--landing-text);
+    font-family: var(--landing-font-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--landing-accent);
+    background: var(--landing-surface);
+}
+
+/* ===== Features Section ===== */
+.landing-features {
+    padding: 80px 24px;
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.landing-section-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--landing-accent-light);
+    margin-bottom: 16px;
+}
+
+.landing-section-title {
+    text-align: center;
+    font-family: var(--landing-font-display);
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin: 0 0 56px;
+}
+
+.landing-features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.feature-card {
+    background: var(--landing-surface);
+    border: 1px solid var(--landing-border);
+    border-radius: 16px;
+    padding: 32px;
+    transition: border-color 0.3s, transform 0.3s;
+}
+
+.feature-card:hover {
+    border-color: var(--landing-accent);
+    transform: translateY(-4px);
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--landing-surface-2);
+    border: 1px solid var(--landing-border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin: 0 auto 20px;
+}
+
+.feature-card h3 {
+    font-family: var(--landing-font-display);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+
+.feature-card p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--landing-text-muted);
+    margin: 0;
+}
+
+/* ===== Pricing Section ===== */
+.landing-pricing {
+    padding: 80px 24px 120px;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.landing-pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    margin-top: 56px;
+}
+
+.pricing-card {
+    background: var(--landing-surface);
+    border: 1px solid var(--landing-border);
+    border-radius: 20px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.pricing-card:hover {
+    transform: translateY(-6px);
+}
+
+.pricing-card.featured {
+    border-color: var(--landing-accent);
+    box-shadow: 0 0 60px var(--landing-accent-glow), inset 0 1px 0 rgba(108, 92, 231, 0.3);
+}
+
+.pricing-card.featured::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 16px;
+    background: var(--landing-gradient);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.pricing-plan-name {
+    font-family: var(--landing-font-display);
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 8px;
+}
+
+.pricing-plan-desc {
+    font-size: 14px;
+    color: var(--landing-text-muted);
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.pricing-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 32px;
+}
+
+.pricing-amount {
+    font-family: var(--landing-font-display);
+    font-size: 48px;
+    font-weight: 700;
+}
+
+.pricing-period {
+    font-size: 14px;
+    color: var(--landing-text-muted);
+}
+
+.pricing-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 32px;
+    flex: 1;
+}
+
+.pricing-features li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--landing-text-muted);
+    border-bottom: 1px solid var(--landing-border);
+}
+
+.pricing-features li:last-child {
+    border-bottom: none;
+}
+
+.pricing-check {
+    color: var(--landing-cyan);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.pricing-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    font-family: var(--landing-font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+.pricing-btn-primary {
+    background: var(--landing-gradient);
+    border: none;
+    color: #fff;
+}
+
+.pricing-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--landing-accent-glow);
+}
+
+.pricing-btn-outline {
+    background: transparent;
+    border: 1px solid var(--landing-border);
+    color: var(--landing-text);
+}
+
+.pricing-btn-outline:hover {
+    border-color: var(--landing-accent);
+    background: var(--landing-surface-2);
+}
+
+/* ===== Footer ===== */
+.landing-footer {
+    padding: 32px 48px;
+    border-top: 1px solid var(--landing-border);
+    text-align: center;
+    font-size: 13px;
+    color: var(--landing-text-muted);
+}
+
+.billing-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 48px;
+    background: var(--landing-surface);
+    border: 1px solid var(--landing-border);
+    border-radius: 12px;
+    padding: 4px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.billing-option {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--landing-text-muted);
+    font-family: var(--landing-font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.billing-option.active {
+    background: var(--landing-gradient);
+    color: #fff;
+}
+
+.billing-save {
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--landing-cyan);
+    color: #06060e;
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .landing-nav {
+        padding: 16px 20px;
+    }
+
+    .landing-nav-links {
+        display: none;
+    }
+
+    .landing-hero h1 {
+        font-size: 36px;
+        letter-spacing: -1px;
+    }
+
+    .landing-hero p {
+        font-size: 16px;
+    }
+
+    .landing-hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .landing-features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .landing-pricing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .landing-section-title {
+        font-size: 28px;
+    }
+}

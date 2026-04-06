@@ -144,6 +144,18 @@
     animation: sparkle-breath 2.5s infinite ease-in-out;
 }
 
+textarea:disabled{
+  cursor: not-allowed;
+  /* pointer-events: none; */
+  opacity: 0.6;
+}
+
+button:disabled{
+  cursor: not-allowed !important;
+  /* pointer-events: none; */
+  opacity: 0.6;
+}
+
 @keyframes sparkle-breath {
 
     0%,

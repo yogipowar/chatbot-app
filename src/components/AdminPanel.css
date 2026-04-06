@@ -8,8 +8,8 @@
 
 /* Sidebar */
 .admin-sidebar {
-    width: 260px;
-    background-color: #E2E8F0;
+    width: 250px;
+    background-color: #FFFFFF;
     color: #0F172A;
     display: flex;
     flex-direction: column;
@@ -37,7 +37,7 @@
 }
 
 .sidebar-nav li a {
-    display: block;
+    /* display: block; */
     padding: 12px 20px;
     color: #0F172A;
     text-decoration: none;
@@ -48,11 +48,23 @@
     margin: 4px auto;
     transition: background-color 0.15s;
     text-align: left;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 7px;
+}
+
+.sidebar-nav li a svg {
+    width: 14px;
+}
+
+.logout-btn svg {
+    width: 14px;
 }
 
 
 .sidebar-nav li a.active {
-    background-color: #FFFFFF;
+    background-color: #F8FAFC;
     color: #0F172A;
     border-radius: 4px;
 }
@@ -77,12 +89,13 @@
     font-size: 14px;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
-    padding: 8px 0;
+    padding: 8px 20px;
+     display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 7px;
 }
 
-.logout-btn:hover {
-    color: #fff;
-}
 
 /* Main Content */
 .admin-main {
@@ -309,38 +322,38 @@
 }
 
 .pagination {
-  display: flex;
-  gap: 8px;
-  justify-content: end;
-  margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: end;
+    margin-top: 16px;
 }
 
 .pagination button {
-  padding: 6px 12px;
-  border: 1px solid #ddd;
-  cursor: pointer;
-  background: white;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    background: white;
 }
 
 .pagination button.active-page {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
 }
 
 .pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .search-box {
-  margin-bottom: 12px;
-  float: right;
+    margin-bottom: 12px;
+    float: right;
 }
 
 .search-box input {
-  padding: 8px 12px;
-  width: 250px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+    padding: 8px 12px;
+    width: 250px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
 }

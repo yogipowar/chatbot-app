@@ -27,6 +27,7 @@ function Chatbot() {
   const [humanMessages, setHumanMessages] = useState([]);
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [isChatDisabled, setIsChatDisabled] = useState(false);
 
   const textareaRef = useRef(null);
 
@@ -54,7 +55,7 @@ function Chatbot() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = '36';
+    const id = '52';
 
     // const params = new URLSearchParams(window.location.search);
     // const id = params.get("websiteId");
@@ -85,6 +86,24 @@ function Chatbot() {
       if (result.status && result.user) {
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
+        // 🔥 NEW LOGIC
+        const createdDate = new Date(result.user.createdAt).getTime();
+        const currentDate = new Date().getTime();
+
+        const diffDays = Math.floor(
+          (currentDate - createdDate) / (1000 * 60 * 60 * 24)
+        );
+
+        const remaining = 7 - diffDays;
+
+        if (
+          result.user.subscription_status !== "active" &&
+          remaining <= 0
+        ) {
+          setIsChatDisabled(true);
+        } else {
+          setIsChatDisabled(false);
+        }
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -348,8 +367,8 @@ function Chatbot() {
       const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
 
       // ✅ PLAY SOUND only when message is from ADMIN (not user)
-       if (String(data.messageById) !== String(userId)) {
-      play();
+      if (String(data.messageById) !== String(userId)) {
+        play();
       }
 
       // ✅ Only update messages if same conversation
@@ -501,6 +520,18 @@ function Chatbot() {
     };
   }, []);
 
+  useEffect(() => {
+  if (isChatDisabled) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: "bot",
+        text: "⚠️ Your free trial has expired. Please upgrade to continue using the chatbot."
+      }
+    ]);
+  }
+}, [isChatDisabled]);
+
   return (
     <div className="chatbotContainer">
       <div className="chatHeader">
@@ -610,11 +641,11 @@ function Chatbot() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Ask something..."
-          disabled={isLoading || !activeUrl}
+          disabled={isLoading || !activeUrl || isChatDisabled}
           className="auto-expand-input"
         />
 
-        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl}>
+        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl || isChatDisabled}>
           <Send size={18} />
         </button>
       </div>
