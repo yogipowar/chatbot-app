@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { toast } from "react-toastify";
 import "./OwnerAccount.css";
 
 const OwnerAccount = () => {
@@ -102,7 +101,7 @@ const OwnerAccount = () => {
             const data = await res.json();
 
             if (data.status) {
-                toast.success("✅ Profile updated successfully");
+                toast.success("Profile updated successfully");
 
                 setIsEditing(false);
                 setPdfFile(null);
@@ -112,7 +111,7 @@ const OwnerAccount = () => {
             }
         } catch (err) {
             console.error(err);
-            alert("❌ Update failed");
+            alert("Update failed");
         }
 
         setLoading(false);
@@ -130,64 +129,65 @@ const OwnerAccount = () => {
             <div className="account-container">
                 <div className="account-card">
 
-                    {/* Email */}
-                    <div className="form-group">
-                        <label>Email</label>
-                        <input
-                            type="text"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                        />
+                    <div className="form-flex">
+                        <div className="form-group">
+                            <label>Email</label>
+                            <input
+                                type="text"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                                disabled
+                            />
+                        </div>
+
+                        {/* Sitemap */}
+                        <div className="form-group">
+                            <label>Sitemap URL</label>
+                            <input
+                                type="text"
+                                name="sitemapUrl"
+                                value={formData.sitemapUrl}
+                                onChange={handleChange}
+                                disabled={!isEditing}
+                            />
+                        </div>
                     </div>
+                    <div className="form-flex">
+                        {/* PDF Upload */}
+                        <div className="form-group">
+                            <label>Upload PDF</label>
 
-                    {/* Sitemap */}
-                    <div className="form-group">
-                        <label>Sitemap URL</label>
-                        <input
-                            type="text"
-                            name="sitemapUrl"
-                            value={formData.sitemapUrl}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                        />
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={handleFileChange}
+                                    />
+                                    {pdfFile && (
+                                        <p className="file-name">
+                                            Selected: {pdfFile.name}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="file-name">
+                                    {user?.pdfUrl || "No PDF uploaded"}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Subscription */}
+                        <div className="form-group">
+                            <label>Subscription Status</label>
+                            <input
+                                type="text"
+                                value={user?.subscription_status || ""}
+                                disabled
+                            />
+                        </div>
                     </div>
-
-                    {/* PDF Upload */}
-                    <div className="form-group">
-                        <label>Upload PDF</label>
-
-                        {isEditing ? (
-                            <>
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={handleFileChange}
-                                />
-                                {pdfFile && (
-                                    <p className="file-name">
-                                        Selected: {pdfFile.name}
-                                    </p>
-                                )}
-                            </>
-                        ) : (
-                            <p className="file-name">
-                                {user?.pdfUrl || "No PDF uploaded"}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Subscription */}
-                    <div className="form-group">
-                        <label>Subscription Status</label>
-                        <input
-                            type="text"
-                            value={user?.subscription_status || ""}
-                            disabled
-                        />
-                    </div>
-
                     {/* Buttons */}
                     <div className="button-group">
                         {!isEditing ? (

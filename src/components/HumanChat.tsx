@@ -329,14 +329,14 @@ const HumanChat = () => {
                             </div>
                             <div className="chat-input">
                                 <input type="text" value={input} disabled={selectedConversation?.status === "closed"} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Type message..." />
-                                <button onClick={sendMessage} disabled={selectedConversation?.status === "closed"}>Send</button>
+                                <button onClick={sendMessage} disabled={selectedConversation?.status === "closed"}>Send Message</button>
                             </div>
                         </>
                     )}
                 </div>
             </div>
 
-     
+
         </div>
     );
 };

@@ -12,6 +12,7 @@ import OwnerDashboard from './components/OwnerDashboard';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OwnerAccount from './components/OwnerAccount';
+import Invoice from './components/Invoice';
 
 function App() {
   const [auth, setAuth] = useState({ isLoggedIn: false, role: '' });
@@ -43,6 +44,7 @@ function App() {
           <Route path="/admin/*" element={<AdminPanel />} />
           <Route path="/human-chat" element={<HumanChat />} />
           <Route path="/dashboard" element={<OwnerDashboard />} />
+          <Route path="/invoice" element={<Invoice />} />
           <Route path="/my-account" element={<OwnerAccount />} />
           <Route path="/plans" element={<Plans />} />
         </Routes>

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import SubscriptionModal from "./SubscriptionModal";
 import "./OwnerDashboard.css";
 import TrialExpiredModal from "./TrialExpiredModal";
+import Image from "../assets/3starts.png"
 
 const OwnerDashboard = () => {
     const navigate = useNavigate();
@@ -78,68 +79,127 @@ const OwnerDashboard = () => {
                 }}
             />
 
+
             <div className="dashboard-content">
-
-                <div className="dashboard-header">
-                    <h1>Dashboard</h1>
-                    <p>Welcome back! Here's your account overview</p>
+                <div className="chat-header">
+                    <h4>Dashboard </h4>
+                    {user?.subscription_status === "active" ? (
+                        ""
+                    ) : (
+                        <button className="close-btn">
+                            Upgrade Plan
+                        </button>
+                    )}
                 </div>
+                <div className="dashboard-inner-content">
+                    <div className="top-section">
 
-                <div className="dashboard-grid">
-
-                    {/* Admin Details */}
-                    <div className="card">
-                        <h3>Admin Details</h3>
-                        <p><strong>ID:</strong> {user?.id}</p>
-                        <p><strong>Email:</strong> {user?.username}</p>
-                        <p>
-                            <strong>Status:</strong>
-                            <span className={`status ${user?.subscription_status}`}>
-                                {user?.subscription_status}
+                        {/* LEFT - Welcome */}
+                        <div className="welcome-card">
+                            <span className="welcome-badge">
+                                {user?.subscription_status === "active"
+                                    ? "SUBSCRIPTION ACTIVE"
+                                    : "NEW ACCOUNT ACTIVATION"}
                             </span>
-                        </p>
-                    </div>
 
-                    {/* Trial / Subscription */}
-                    {user?.subscription_status !== "active" ? (
-                        <div className="card">
-                            <h3>Free Trial</h3>
+                            <h2>
+                                {user?.subscription_status === "active"
+                                    ? "🎉 Your subscription is active!"
+                                    : "Welcome! Your 7-day free trial started"}
+                            </h2>
 
-                            {remainingDays > 0 ? (
-                                <>
-                                    <p className="trial-text">
-                                        ⏳ {remainingDays} days remaining
-                                    </p>
+                            <p>
+                                {user?.subscription_status === "active"
+                                    ? "You now have full access to all premium features. Start automating and scaling your customer interactions."
+                                    : "We're excited to help you automate your customer interactions with our next-gen AI agent system."}
+                            </p>
 
-                                    <button
-                                        className="primary-btn"
-                                        onClick={() => setShowModal(true)}
-                                    >
-                                        Upgrade Plan
+                            {user?.subscription_status === "active" ?
+                                ("") : (
+                                    <button className="view-btn">
+
+                                        View Plans
                                     </button>
+                                )}
+
+                            <img className="startimg" src={Image} alt="" />
+                        </div>
+
+                        {/* RIGHT - Trial / Active */}
+                        <div className="trial-card">
+
+                            {user?.subscription_status === "active" ? (
+                                <>
+                                    <div className="trial-circle active-circle">
+                                        <div className="inner-circle">
+                                            ✔
+                                            <span>ACTIVE</span>
+                                        </div>
+                                    </div>
+
+                                    <h3>Subscription Active</h3>
+
+                                    <p>
+                                        Your plan is active. Enjoy uninterrupted access to all features.
+                                    </p>
                                 </>
                             ) : (
                                 <>
-                                    <p className="expired-text">
-                                        ❌ Trial expired
-                                    </p>
-
-                                    <button
-                                        className="primary-btn"
-                                        onClick={() => setShowModal(true)}
+                                    <div
+                                        className="trial-circle"
+                                        style={{
+                                            background: `conic-gradient(#0ea5e9 ${(remainingDays / 7) * 100}%, #e5e7eb 0%)`
+                                        }}
                                     >
-                                        Subscribe Now
-                                    </button>
+                                        <div className="inner-circle">
+                                            {remainingDays}
+                                            <span>DAYS LEFT</span>
+                                        </div>
+                                    </div>
+
+                                    <h3>Trial Countdown</h3>
+
+                                    <p>
+                                        We're helping you engage customers better and respond instantly
+                                        with your AI chatbot.
+                                    </p>
                                 </>
                             )}
-                        </div>
-                    ) : (
-                        <div className="card success">
-                            <h3>Subscription</h3>
-                            <p>🎉 Your subscription is active</p>
-                        </div>
-                    )}
 
+                        </div>
+
+                    </div>
+
+                    <div className="admin-card">
+                        <h3>Admin Details</h3>
+
+                        <div className="admin-inner-card">
+                            <div className="admin-info">
+
+                                <div className="admin-block">
+                                    <span>ADMIN ID</span>
+                                    <strong>#{user?.id}</strong>
+                                </div>
+
+                                <div className="admin-block">
+                                    <span>EMAIL</span>
+                                    <strong>{user?.username}</strong>
+                                </div>
+
+                                <div className="admin-block">
+                                    <span>ACCOUNT STATUS</span>
+                                    <strong className="status-active">● Active</strong>
+                                </div>
+
+
+
+                            </div>
+                            <div className="admin-block">
+                                <span>SUBSCRIPTION</span>
+                                <strong className="subscription">7-Day Free Trial</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { LayoutGrid, LogOut, MessageCircle, UserRound } from "lucide-react";
+import { LayoutGrid, LogOut, MessageCircle, ReceiptText, UserRound } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
@@ -42,16 +42,6 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
               </a>
             </li>
 
-            <li>
-              <a
-                className={
-                  location.pathname === "/my-account" ? "active" : ""
-                }
-                onClick={() => navigate("/my-account")}
-              >
-                <UserRound /> My Account
-              </a>
-            </li>
 
             {/* ✅ Human Chat */}
             <li>
@@ -65,7 +55,29 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                   )
                 }
               >
-               <MessageCircle /> Human Chat
+                <MessageCircle /> Human Chat
+              </a>
+            </li>
+
+            <li>
+              <a
+                className={
+                  location.pathname === "/my-account" ? "active" : ""
+                }
+                onClick={() => navigate("/my-account")}
+              >
+                <UserRound /> My Account
+              </a>
+            </li>
+
+            <li>
+              <a
+                className={
+                  location.pathname === "/invoice" ? "active" : ""
+                }
+                onClick={() => navigate("/invoice")}
+              >
+                <ReceiptText /> Invoice
               </a>
             </li>
           </>

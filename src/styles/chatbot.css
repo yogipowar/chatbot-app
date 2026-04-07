@@ -10,13 +10,6 @@
 
 /* Sidebar */
 
-.chat-sidebar {
-  width: 300px;
-  background: #F2F4F6;
-  color: white;
-  padding: 20px;
-}
-
 .new-chat-btn {
   width: 100%;
   padding: 10px;
@@ -28,15 +21,6 @@
 
 .chat-history {
   margin-top: 20px;
-}
-
-.chat-item {
-  padding: 10px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  background: transparent;
-  text-align: left;
-  color: #191C1E;
 }
 
 .username{
@@ -53,18 +37,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-/* Header */
-
-.chat-header {
-  height: 60px;
-  border-bottom: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-left: 20px;
-  font-weight: bold;
 }
 
 /* Messages */
