@@ -54,11 +54,11 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '52';
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = '60';
+
+    // const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
@@ -243,10 +243,37 @@ function Chatbot() {
 
 
       if (authResult?.status && authResult?.user?.id) {
+
+        // ✅ SEND EMAIL TO ADMIN
+        const adminEmail = localStorage.getItem("adminemail");
+
+        if (adminEmail) {
+          try {
+            await fetch("https://chatbotapi.scrollosoft.com/users/send-email", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: adminEmail,
+                // to: "powaryogesh20@gmail.com",
+                subject: "New Human Chat Request",
+                text: `User ${email} wants to connect with human support.`,
+                html: `<h2>New Chat Request</h2><p>User Email: ${email}</p>`,
+              }),
+            });
+
+            alert("✅ Email sent to admin");
+          } catch (err) {
+            console.error("❌ Email send failed:", err);
+          }
+        }
+
         const userId = authResult.user.id;
         setUserId(userId);
         localStorage.setItem("userId", userId);
         localStorage.setItem("userEmail", email);
+        setActiveTab("human");
 
         setShowHumanDrawer(false);
         setEmail("");
@@ -275,7 +302,7 @@ function Chatbot() {
                   "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                  message: "hello, i have a query again",
+                  // message: "hello, i have a query again",
                   userId: userId,
                   adminId: websiteId
                 })
@@ -301,7 +328,7 @@ function Chatbot() {
               setHasHumanChat(true);
               localStorage.setItem("hasHumanChat", "true");
               fetchHumanMessages(conversationId);
-
+              setActiveTab("human");
               console.log("New Conversation ID:", conversationId);
             }
           } else {
@@ -417,7 +444,13 @@ function Chatbot() {
           }
         );
 
-        console.log("✅ User re-auth done");
+        if (result?.status) {
+          console.log("✅ User re-auth done");
+
+          // ✅ SWITCH TO HUMAN TAB
+          setActiveTab("human");
+        }
+
       }
     };
 
@@ -521,16 +554,16 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-  if (isChatDisabled) {
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: "bot",
-        text: "⚠️ Your free trial has expired. Please upgrade to continue using the chatbot."
-      }
-    ]);
-  }
-}, [isChatDisabled]);
+    if (isChatDisabled) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "⚠️ Your free trial has expired. Please upgrade to continue using the chatbot."
+        }
+      ]);
+    }
+  }, [isChatDisabled]);
 
   return (
     <div className="chatbotContainer">

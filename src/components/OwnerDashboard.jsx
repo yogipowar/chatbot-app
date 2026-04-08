@@ -75,7 +75,7 @@ const OwnerDashboard = () => {
             <AdminSidebar
                 onLogout={() => {
                     localStorage.removeItem("isLoggedIn");
-                    navigate("/");
+                    navigate("/login");
                 }}
             />
 
@@ -86,7 +86,7 @@ const OwnerDashboard = () => {
                     {user?.subscription_status === "active" ? (
                         ""
                     ) : (
-                        <button className="close-btn">
+                        <button className="close-btn"  onClick={() => setShowModal(true)}>
                             Upgrade Plan
                         </button>
                     )}
@@ -116,7 +116,7 @@ const OwnerDashboard = () => {
 
                             {user?.subscription_status === "active" ?
                                 ("") : (
-                                    <button className="view-btn">
+                                    <button className="view-btn"  onClick={() => setShowModal(true)}>
 
                                         View Plans
                                     </button>
@@ -188,7 +188,7 @@ const OwnerDashboard = () => {
 
                                 <div className="admin-block">
                                     <span>ACCOUNT STATUS</span>
-                                    <strong className="status-active">● Active</strong>
+                                    <strong className="status-active">{user?.subscription_status}</strong>
                                 </div>
 
 

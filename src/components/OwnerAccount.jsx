@@ -122,7 +122,7 @@ const OwnerAccount = () => {
             <AdminSidebar
                 onLogout={() => {
                     localStorage.removeItem("isLoggedIn");
-                    navigate("/");
+                    navigate("/login");
                 }}
             />
 

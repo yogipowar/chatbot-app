@@ -61,7 +61,12 @@ const HumanChat = () => {
             console.log("💬 Messages:", data);
 
             if (data.status) {
-                setMessages(data.data);
+                // ✅ FILTER EMPTY TEXT
+                const filteredMessages = data.data.filter(
+                    (msg: any) => msg.text && msg.text.trim() !== ""
+                );
+
+                setMessages(filteredMessages);
             }
         } catch (err) {
             console.error("❌ Error fetching messages:", err);
@@ -98,6 +103,42 @@ const HumanChat = () => {
 
                 const data = await res.json();
                 console.log("✅ Status Update Response:", data);
+
+                // ✅ IMMEDIATE UI UPDATE (IMPORTANT FIX)
+                setConversations((prev) =>
+                    prev.map((c) =>
+                        c.conversationId === conv.conversationId
+                            ? { ...c, status: "accepted" }
+                            : c
+                    )
+                );
+
+                // ✅ ALSO update selected conversation
+                setSelectedConversation((prev) =>
+                    prev ? { ...prev, status: "accepted" } : prev
+                );
+
+                // ✅ SEND EMAIL
+                const userEmail = conv.username;
+
+                if (userEmail) {
+                    try {
+                        await fetch("https://chatbotapi.scrollosoft.com/users/send-email", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                to: userEmail,
+                                subject: "Chat Accepted",
+                                text: "Admin accepted your request.",
+                                html: `<h2>Hi</h2><p>Your chat request has been accepted.</p>`,
+                            }),
+                        });
+                    } catch (err) {
+                        console.error("❌ Email failed:", err);
+                    }
+                }
             }
 
             // setConversations((prev) =>
@@ -259,7 +300,7 @@ const HumanChat = () => {
 
     return (
         <div className="human-chat-layout">
-            <AdminSidebar onLogout={() => { localStorage.removeItem("isLoggedIn"); navigate("/"); }} />
+            <AdminSidebar onLogout={() => { localStorage.removeItem("isLoggedIn"); navigate("/login"); }} />
             <div className="chat-layout">
                 <div className="chat-sidebar">
                     <h3>Conversations</h3>
@@ -293,7 +334,7 @@ const HumanChat = () => {
                             onClick={() => handleSelectConversation(conv)}
                         >
                             <div className="chat-item-header">
-                                <span className="username">User {conv.userId}</span>
+                                <span className="username">{conv.username}</span>
                                 {/* {conv.messageStatus === "unread" && <span className="badge">New</span>} */}
                                 {/* {conv.messageStatus === "unread" && (
                                     <span className="badge">New</span>
@@ -309,7 +350,7 @@ const HumanChat = () => {
                         <div className="no-chat">Select a conversation</div>
                     ) : (
                         <>
-                            <div className="chat-header"><h4>User {selectedConversation.userId}</h4>
+                            <div className="chat-header"><h4>{selectedConversation.username}</h4>
                                 {selectedConversation.status !== "closed" && (
                                     <button onClick={handleCloseConversation} className="close-btn">
                                         Close Chat
