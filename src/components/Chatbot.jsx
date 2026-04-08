@@ -28,7 +28,12 @@ function Chatbot() {
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [isChatDisabled, setIsChatDisabled] = useState(false);
-
+  const [conversationStatus, setConversationStatus] = useState(null);
+  useEffect(() => {
+    if (conversationStatus === "closed") {
+      setActiveTab("ai");
+    }
+  }, [conversationStatus]);
   const textareaRef = useRef(null);
 
   const aiMessagesEndRef = useRef(null);
@@ -263,7 +268,7 @@ function Chatbot() {
               }),
             });
 
-            alert("✅ Email sent to admin");
+            console.log("✅ Email sent to admin");
           } catch (err) {
             console.error("❌ Email send failed:", err);
           }
@@ -365,10 +370,23 @@ function Chatbot() {
 
       const result = await response.json();
 
-      console.log("Human Messages:", result);
-
       if (result?.status) {
-        setHumanMessages(result.data || []);
+        const msgs = result.data || [];
+
+        setHumanMessages(msgs);
+
+        // ✅ FIX: GET STATUS IMMEDIATELY
+        if (msgs.length > 0) {
+          const status = msgs[0].conversationStatus;
+
+          setConversationStatus(status);
+
+          // ✅ HIDE TAB ON LOAD
+          if (status === "closed") {
+            setHasHumanChat(false);
+            setActiveTab("ai");
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching human messages:", error);
@@ -385,38 +403,60 @@ function Chatbot() {
     convIdRef.current = conversationId;
   }, [conversationId]);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      if (conversationId) {
+        fetchHumanMessages(conversationId);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [conversationId]);
+
   // 3. The Updated Listener
   useEffect(() => {
     const handleIncomingMessage = async (data) => {
       console.log("🔥 Incoming:", data);
-
       const currentId = convIdRef.current;
-      const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
 
-      // ✅ PLAY SOUND only when message is from ADMIN (not user)
+      // 🔔 SOUND
       if (String(data.messageById) !== String(userId)) {
         play();
       }
 
-      // ✅ Only update messages if same conversation
+      // ✅ ALWAYS CALL MESSAGE API (IMPORTANT FIX)
       if (currentId) {
-        const response = await fetch(
+        const res = await fetch(
           `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${currentId}`
         );
 
-        const result = await response.json();
+        const result = await res.json();
 
         if (result?.status) {
-          setHumanMessages(result.data || []);
+          const msgs = result.data || [];
+          setHumanMessages(msgs);
+
+          // ✅ EXTRACT STATUS HERE (REAL FIX)
+          if (msgs.length > 0) {
+            const status = msgs[0].conversationStatus;
+
+            setConversationStatus(status);
+
+            if (status === "closed") {
+              setHasHumanChat(false);
+              setActiveTab("ai");
+            }
+          }
         }
       }
     };
 
     socket.on("receive_message", handleIncomingMessage);
-    // ✅ PLAY SOUND only when message is from ADMIN (not user)
-    // if (String(data.messageById) !== String(userId)) {
-    // play();
-    // }
+
     return () => {
       socket.off("receive_message", handleIncomingMessage);
     };
@@ -575,7 +615,7 @@ function Chatbot() {
 
       </div>
 
-      {hasHumanChat && (
+      {hasHumanChat && conversationStatus !== "closed" && (
         <div className="chatTabs">
           <button
             className={`aiTab ${activeTab === "ai" ? "activeTab" : ""}`}

@@ -166,7 +166,7 @@ const HumanChat = () => {
         if (!selectedConversation) return;
 
         try {
-            const res = await fetch(
+            await fetch(
                 `https://chatbotapi.scrollosoft.com/conversation/chnage-status`,
                 {
                     method: "POST",
@@ -178,10 +178,7 @@ const HumanChat = () => {
                 }
             );
 
-            const data = await res.json();
-            console.log("✅ Closed:", data);
-
-            // ✅ Update UI instantly
+            // ✅ UI UPDATE
             setConversations((prev) =>
                 prev.map((c) =>
                     c.conversationId === selectedConversation.conversationId
@@ -190,9 +187,10 @@ const HumanChat = () => {
                 )
             );
 
-            // ✅ Optional: clear chat window
-            setSelectedConversation(null);
-            setMessages([]);
+            setSelectedConversation((prev:any) =>
+                prev ? { ...prev, status: "closed" } : prev
+            );
+
         } catch (err) {
             console.error("❌ Close error:", err);
         }
