@@ -49,7 +49,7 @@ const SubscriptionModal = ({ onClose }) => {
 
     const openRazorpay = (subscriptionId) => {
         const options = {
-            key: "rzp_test_SZJs8LheVmP8lm", // 🔥 Replace this
+            key: "rzp_test_SZJs8LheVmP8lm", 
             subscription_id: subscriptionId,
             name: "wcchatbot",
             description: "Elite Plan Subscription",
@@ -57,7 +57,6 @@ const SubscriptionModal = ({ onClose }) => {
             handler: async function (response) {
                 console.log("✅ Payment Success:", response);
 
-                // 🔥 After payment → verify subscription
                 setTimeout(() => {
                     verifySubscription();
                 }, 2000);

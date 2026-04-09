@@ -189,8 +189,12 @@ const OwnerDashboard = () => {
 
                             </div>
                             <div className="admin-block">
-                                <span>SUBSCRIPTION</span>
-                                <strong className="subscription">7-Day Free Trial</strong>
+                                {user?.subscription_status === "active" ? "" :
+                                    <>
+                                        <span>SUBSCRIPTION</span>
+                                        <strong className="subscription">7-Day Free Trial</strong>
+                                    </>
+                                }
                             </div>
                         </div>
                     </div>
