@@ -37,7 +37,7 @@ function App() {
 
   return (
     <>
-      <Router basename="/chatbot-app">
+      <Router>
         <Routes>
           <Route path="/" element={<Chatbot />} />
           <Route path="/login" element={<LoginPage />} />
