@@ -15,35 +15,46 @@
     background: #fff;
     padding: 30px;
     border-radius: 12px;
-    width: 400px;
+    width: 395px;
     text-align: center;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: scaleIn 0.2s ease;
 }
 
 .trial-modal h2 {
-    color: #dc2626;
+    font-size: 24px;
     margin-bottom: 10px;
+    font-weight: 600;
+    font-family: "Poppins", sans-serif;
 }
 
 .trial-modal p {
-    color: #4b5563;
+    color: #64748B;
     margin-bottom: 20px;
     font-size: 14px;
 }
 
 .upgrade-btn {
-    background: #6366f1;
+    font-size: 14px;
+    background: #009DE1;
     color: white;
-    padding: 10px 18px;
+    padding: 13px 18px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: 0.2s;
+    height: 48px;
+    width: 100%;
+    margin-top: 20px;
 }
 
 .upgrade-btn:hover {
-    background: #4f46e5;
+    background: #009DE1;
+}
+
+.expired-img {
+    width: 80px;
+    margin-bottom: 0px;
 }
 
 @keyframes scaleIn {
@@ -51,6 +62,7 @@
         transform: scale(0.9);
         opacity: 0;
     }
+
     to {
         transform: scale(1);
         opacity: 1;

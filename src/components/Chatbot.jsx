@@ -60,7 +60,7 @@ function Chatbot() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = '60';
+    const id = '63';
 
     // const params = new URLSearchParams(window.location.search);
     // const id = params.get("websiteId");
@@ -737,9 +737,6 @@ function Chatbot() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <div className="drawerButtons">
-              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </button>
 
               <button
                 className="drawerClose"
@@ -747,6 +744,10 @@ function Chatbot() {
               >
                 Close
               </button>
+              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </button>
+
             </div>
           </div>
         </div>

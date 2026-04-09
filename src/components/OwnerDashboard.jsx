@@ -46,8 +46,6 @@ const OwnerDashboard = () => {
         const createdDate = new Date(createdAt).getTime();
         const currentDate = new Date().getTime();
 
-        console.log("created date", createdDate, "current date", currentDate, "status", subscription_status);
-
         const diffDays = Math.floor(
             (currentDate - createdDate) / (1000 * 60 * 60 * 24)
         );
@@ -56,12 +54,8 @@ const OwnerDashboard = () => {
 
         setRemainingDays(remaining > 0 ? remaining : 0);
 
-        // ✅ NEW CONDITION
-        if (
-            user?.subscription_status === "inactive" &&
-            remainingDays <= 0
-        ) {
-            console.log("11111111111");
+        // ✅ FIXED CONDITION
+        if (subscription_status === "inactive" && remaining <= 0) {
             setShowTrialExpired(true);
         }
     };
@@ -86,7 +80,7 @@ const OwnerDashboard = () => {
                     {user?.subscription_status === "active" ? (
                         ""
                     ) : (
-                        <button className="close-btn"  onClick={() => setShowModal(true)}>
+                        <button className="close-btn" onClick={() => setShowModal(true)}>
                             Upgrade Plan
                         </button>
                     )}
@@ -116,9 +110,9 @@ const OwnerDashboard = () => {
 
                             {user?.subscription_status === "active" ?
                                 ("") : (
-                                    <button className="view-btn"  onClick={() => setShowModal(true)}>
+                                    <button className="view-btn" onClick={() => setShowModal(true)}>
 
-                                        View Plans
+                                        Upgrade Plan
                                     </button>
                                 )}
 

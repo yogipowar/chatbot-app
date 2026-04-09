@@ -8,6 +8,7 @@ interface User {
   username: string;
   pdfUrl: string;
   sitemapUrl: string;
+  subscription_status: string;
   createdAt: string;
 }
 
@@ -155,6 +156,7 @@ const AdminPanel = () => {
                     <th>ID</th>
                     <th>Username</th>
                     <th>Resource</th>
+                    <th>Status</th>
                     <th>Created</th>
                   </tr>
                 </thead>
@@ -191,6 +193,7 @@ const AdminPanel = () => {
                           )}
                         </td>
 
+                        <td>{user.subscription_status}</td>
                         <td>{formatDate(user.createdAt)}</td>
                       </tr>
                     ))
@@ -351,11 +354,12 @@ const AddAdminModal = ({
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3>Add New Admin</h3>
+        <h3>Setup Elite Bot</h3>
+        <p>Initialize your AI agent with your business data.</p>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>Business Email</label>
 
             <input
               type="email"
