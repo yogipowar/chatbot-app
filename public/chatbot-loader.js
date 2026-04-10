@@ -31,7 +31,7 @@
     });
 
     const iframe = document.createElement("iframe");
-    iframe.src = `https://yogipowar.github.io/chatbot-app/?websiteId=${websiteId}`;
+    iframe.src = `https://wcchatbot.com/?websiteId=${websiteId}`;
 
     Object.assign(iframe.style, {
         position: "fixed",

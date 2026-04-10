@@ -1,0 +1,25 @@
+.integration-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: left;
+}
+
+.code-section {
+    position: relative;
+    background: rgb(0 0 0);
+    padding: 16px;
+    border-radius: 8px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    color: white;
+}
+
+.copy-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}

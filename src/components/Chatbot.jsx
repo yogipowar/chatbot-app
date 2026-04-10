@@ -27,13 +27,7 @@ function Chatbot() {
   const [humanMessages, setHumanMessages] = useState([]);
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [isChatDisabled, setIsChatDisabled] = useState(false);
-  const [conversationStatus, setConversationStatus] = useState(null);
-  useEffect(() => {
-    if (conversationStatus === "closed") {
-      setActiveTab("ai");
-    }
-  }, [conversationStatus]);
+
   const textareaRef = useRef(null);
 
   const aiMessagesEndRef = useRef(null);
@@ -55,15 +49,16 @@ function Chatbot() {
 
     if (savedConversationId) {
       setConversationId(savedConversationId);
+      checkConversationStatus(savedConversationId);
     }
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '64';
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = '36';
+
+    // const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
@@ -91,24 +86,6 @@ function Chatbot() {
       if (result.status && result.user) {
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
-        // 🔥 NEW LOGIC
-        const createdDate = new Date(result.user.createdAt).getTime();
-        const currentDate = new Date().getTime();
-
-        const diffDays = Math.floor(
-          (currentDate - createdDate) / (1000 * 60 * 60 * 24)
-        );
-
-        const remaining = 7 - diffDays;
-
-        if (
-          result.user.subscription_status !== "active" &&
-          remaining <= 0
-        ) {
-          setIsChatDisabled(true);
-        } else {
-          setIsChatDisabled(false);
-        }
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -248,37 +225,10 @@ function Chatbot() {
 
 
       if (authResult?.status && authResult?.user?.id) {
-
-        // ✅ SEND EMAIL TO ADMIN
-        const adminEmail = localStorage.getItem("adminemail");
-
-        if (adminEmail) {
-          try {
-            await fetch("https://chatbotapi.scrollosoft.com/users/send-email", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                to: adminEmail,
-                // to: "powaryogesh20@gmail.com",
-                subject: "New Human Chat Request",
-                text: `User ${email} wants to connect with human support.`,
-                html: `<h2>New Chat Request</h2><p>User Email: ${email}</p>`,
-              }),
-            });
-
-            console.log("✅ Email sent to admin");
-          } catch (err) {
-            console.error("❌ Email send failed:", err);
-          }
-        }
-
         const userId = authResult.user.id;
         setUserId(userId);
         localStorage.setItem("userId", userId);
         localStorage.setItem("userEmail", email);
-        setActiveTab("human");
 
         setShowHumanDrawer(false);
         setEmail("");
@@ -334,6 +284,7 @@ function Chatbot() {
               localStorage.setItem("hasHumanChat", "true");
               fetchHumanMessages(conversationId);
               setActiveTab("human");
+
               console.log("New Conversation ID:", conversationId);
             }
           } else {
@@ -344,7 +295,7 @@ function Chatbot() {
             setHasHumanChat(true);
             localStorage.setItem("hasHumanChat", "true");
             fetchHumanMessages(conversationId);
-
+            setActiveTab("human");
             console.log("Conversation ID:", conversationId);
           }
         }
@@ -370,29 +321,49 @@ function Chatbot() {
 
       const result = await response.json();
 
+      console.log("Human Messages:", result);
+
       if (result?.status) {
-        const msgs = result.data || [];
-
-        setHumanMessages(msgs);
-
-        // ✅ FIX: GET STATUS IMMEDIATELY
-        if (msgs.length > 0) {
-          const status = msgs[0].conversationStatus;
-
-          setConversationStatus(status);
-
-          // ✅ HIDE TAB ON LOAD
-          if (status === "closed") {
-            setHasHumanChat(false);
-            setActiveTab("ai");
-          }
-        }
+        setHumanMessages(result.data || []);
       }
     } catch (error) {
       console.error("Error fetching human messages:", error);
     }
 
     setIsHumanLoading(false);
+  };
+
+  const checkConversationStatus = async (convId) => {
+    if (!convId) return;
+
+    try {
+      const response = await fetch(
+        `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${convId}`
+      );
+
+      const result = await response.json();
+
+      if (result?.status && result.data.length > 0) {
+        const status =
+          result.data[result.data.length - 1].conversationStatus;
+
+        console.log("Conversation Status:", status);
+
+        if (status === "closed") {
+          setHasHumanChat(false);
+          localStorage.setItem("hasHumanChat", "false");
+
+          setActiveTab("ai");
+          setConversationId(null);
+          localStorage.removeItem("conversationId");
+        } else {
+          setHasHumanChat(true);
+          localStorage.setItem("hasHumanChat", "true");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking conversation status:", error);
+    }
   };
 
   // 1. Add this Ref at the top with your other hooks
@@ -403,55 +374,59 @@ function Chatbot() {
     convIdRef.current = conversationId;
   }, [conversationId]);
 
-  useEffect(() => {
-    const handleFocus = () => {
-      if (conversationId) {
-        fetchHumanMessages(conversationId);
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [conversationId]);
-
   // 3. The Updated Listener
   useEffect(() => {
     const handleIncomingMessage = async (data) => {
       console.log("🔥 Incoming:", data);
-      const currentId = convIdRef.current;
 
-      // 🔔 SOUND
+      const currentId = convIdRef.current;
+      const incomingConvId =
+        data.conversationId || data.convId || data.id;
+
+      // ✅ PLAY SOUND only when message is from ADMIN
       if (String(data.messageById) !== String(userId)) {
         play();
       }
 
-      // ✅ ALWAYS CALL MESSAGE API (IMPORTANT FIX)
-      if (currentId) {
-        const res = await fetch(
+      // ❗ IMPORTANT: Don't block execution
+      // Just check if it's same conversation before updating UI
+      if (currentId && incomingConvId) {
+        if (String(incomingConvId) !== String(currentId)) {
+          console.log("⏭️ Different conversation, ignoring UI update");
+          return;
+        }
+      }
+
+      try {
+        const response = await fetch(
           `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${currentId}`
         );
 
-        const result = await res.json();
+        const result = await response.json();
 
         if (result?.status) {
-          const msgs = result.data || [];
-          setHumanMessages(msgs);
+          const messages = result.data || [];
+          setHumanMessages(messages);
 
-          // ✅ EXTRACT STATUS HERE (REAL FIX)
-          if (msgs.length > 0) {
-            const status = msgs[0].conversationStatus;
+          // ✅ Check closed status
+          if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
 
-            setConversationStatus(status);
+            if (lastMsg.conversationStatus === "closed") {
+              console.log("❌ Conversation Closed");
 
-            if (status === "closed") {
               setHasHumanChat(false);
               setActiveTab("ai");
+              setConversationId(null);
+              setHumanMessages([]);
+
+              localStorage.setItem("hasHumanChat", "false");
+              localStorage.removeItem("conversationId");
             }
           }
         }
+      } catch (err) {
+        console.error("Fetch error:", err);
       }
     };
 
@@ -461,6 +436,16 @@ function Chatbot() {
       socket.off("receive_message", handleIncomingMessage);
     };
   }, []);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const interval = setInterval(() => {
+      checkConversationStatus(conversationId);
+    }, 3000); // every 3 sec
+
+    return () => clearInterval(interval);
+  }, [conversationId]);
 
   useEffect(() => {
     const handleConnect = async () => {
@@ -484,13 +469,7 @@ function Chatbot() {
           }
         );
 
-        if (result?.status) {
-          console.log("✅ User re-auth done");
-
-          // ✅ SWITCH TO HUMAN TAB
-          setActiveTab("human");
-        }
-
+        console.log("✅ User re-auth done");
       }
     };
 
@@ -523,6 +502,7 @@ function Chatbot() {
   useEffect(() => {
     if (activeTab === "human" && conversationId) {
       fetchHumanMessages(conversationId);
+      checkConversationStatus(conversationId);
     }
   }, [activeTab, conversationId]);
 
@@ -593,17 +573,6 @@ function Chatbot() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isChatDisabled) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "⚠️ Your free trial has expired. Please upgrade to continue using the chatbot."
-        }
-      ]);
-    }
-  }, [isChatDisabled]);
 
   return (
     <div className="chatbotContainer">
@@ -615,7 +584,7 @@ function Chatbot() {
 
       </div>
 
-      {hasHumanChat && conversationStatus !== "closed" && (
+      {hasHumanChat && (
         <div className="chatTabs">
           <button
             className={`aiTab ${activeTab === "ai" ? "activeTab" : ""}`}
@@ -714,11 +683,11 @@ function Chatbot() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Ask something..."
-          disabled={isLoading || !activeUrl || isChatDisabled}
+          disabled={isLoading || !activeUrl}
           className="auto-expand-input"
         />
 
-        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl || isChatDisabled}>
+        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl}>
           <Send size={18} />
         </button>
       </div>
@@ -737,6 +706,9 @@ function Chatbot() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <div className="drawerButtons">
+              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </button>
 
               <button
                 className="drawerClose"
@@ -744,10 +716,6 @@ function Chatbot() {
               >
                 Close
               </button>
-              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </button>
-
             </div>
           </div>
         </div>

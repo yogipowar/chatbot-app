@@ -233,6 +233,17 @@
   background-color: #FFFFFF;
 }
 
+.msg-time {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.6;
+  text-align: right;
+}
+
+.msg-row.left .msg-time {
+  text-align: left;
+}
+
 .chat-header {
   height: 60px;
   border-bottom: 1px solid #EBEBEB;
@@ -258,7 +269,7 @@
 .chat-bubble {
   max-width: 60%;
   padding: 10px 14px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   border-radius: 12px;
   font-size: 14px;
   text-align: left;
@@ -348,6 +359,7 @@
 .msg-row {
   display: flex;
   margin-bottom: 10px;
+  flex-direction: column;
 }
 
 .msg-row.left {

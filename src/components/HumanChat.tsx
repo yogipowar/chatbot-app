@@ -24,27 +24,20 @@ const HumanChat = () => {
 
     // --- API: Fetch Sidebar ---
     const fetchConversations = async () => {
-        try {
-            const res = await fetch(
-                `https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`
-            );
-            const data = await res.json();
+    try {
+        const res = await fetch(
+            `https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`
+        );
+        const data = await res.json();
 
-            if (data.status && data.data.length > 0) {
-                setConversations(data.data);
-
-                // ✅ Get first conversation id (or selected logic)
-                const firstConvId = data.data[0].id;
-
-                console.log("📌 Conversation ID:", firstConvId);
-
-                // ✅ Call message API immediately
-                fetchMessages(firstConvId);
-            }
-        } catch (err) {
-            console.error("❌ Error fetching conversations:", err);
+        if (data.status) {
+            setConversations(data.data);
+            prevConversationsRef.current = data.data; // ✅ ADD THIS LINE
         }
-    };
+    } catch (err) {
+        console.error("❌ Error fetching conversations:", err);
+    }
+};
 
     const filteredConversations = conversations.filter(
         (conv) => conv.status === statusFilter
@@ -61,10 +54,12 @@ const HumanChat = () => {
             console.log("💬 Messages:", data);
 
             if (data.status) {
-                // ✅ FILTER EMPTY TEXT
-                const filteredMessages = data.data.filter(
-                    (msg: any) => msg.text && msg.text.trim() !== ""
-                );
+                const filteredMessages = data.data
+                    .filter((msg: any) => msg.text && msg.text.trim() !== "")
+                    .map((msg: any) => ({
+                        ...msg,
+                        conversationId: conversationId // ✅ attach manually
+                    }));
 
                 setMessages(filteredMessages);
             }
@@ -80,11 +75,42 @@ const HumanChat = () => {
     //     fetchMessages(cid);
     // };
 
+    useEffect(() => {
+        const events = [
+            "message", "new_message", "chat_message", "receive_message",
+            "msg", "user_message", "send_message", "messageFromUser"
+        ];
+
+        events.forEach(event => {
+            socket.on(event, (data: any) => {
+                console.log(`🔵 EVENT [${event}]:`, JSON.stringify(data));
+            });
+        });
+
+        return () => {
+            events.forEach(event => socket.off(event));
+        };
+    }, []);
+
+    useEffect(() => {
+        const originalOn = socket.onAny;
+
+        socket.onAny((eventName: string, ...args: any[]) => {
+            console.log(`🔴 CAUGHT EVENT: "${eventName}"`, JSON.stringify(args));
+        });
+
+        return () => {
+            socket.offAny();
+        };
+    }, []);
+
     const handleSelectConversation = async (conv: any) => {
-        const cid = conv.conversationId.toString();
+        const cid = conv.conversationId.toString().trim();
 
         setSelectedConversation(conv);
         selectedIdRef.current = cid;
+
+        socket.emit("join_room", { conversationId: cid });
 
         try {
             // ✅ Call correct API: chnage-status
@@ -187,7 +213,7 @@ const HumanChat = () => {
                 )
             );
 
-            setSelectedConversation((prev:any) =>
+            setSelectedConversation((prev: any) =>
                 prev ? { ...prev, status: "closed" } : prev
             );
 
@@ -222,50 +248,86 @@ const HumanChat = () => {
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
     // --- THE SOCKET LISTENER (FIXED) ---
+    // Keep a ref to previous conversations to detect new messages
+    const prevConversationsRef = useRef<any[]>([]);
+
     useEffect(() => {
-        const attachListener = () => {
-            console.log("🎧 Attaching listener with socket:", socket.id);
-            // alert("socket received");
-            const handleIncomingMessage = (data: any) => {
-                console.log("📥 SOCKET EVENT:", data);
+        const handleIncomingMessage = () => {
+            // ✅ STEP 1: Refetch the conversation list (has latest messageText)
+            fetch(`https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.status) return;
 
-                fetchConversations();
+                    const newConversations: any[] = data.data;
+                    const prev = prevConversationsRef.current;
+                    const currentOpenId = selectedIdRef.current?.toString();
 
-                const currentOpenId = selectedIdRef.current?.toString();
-                const incomingConvId = (data.conversationId || data.convId || data.id)?.toString();
+                    // ✅ STEP 2: Find which conversation got a new message
+                    newConversations.forEach((newConv) => {
+                        const oldConv = prev.find(
+                            (c) => c.conversationId?.toString() === newConv.conversationId?.toString()
+                        );
 
-                // 🔔 PLAY SOUND ONLY IF MESSAGE FROM USER
-                if (String(data.messageById) !== String(adminId)) {
-                    if (String(data.messageById) !== String(adminId)) {
-                        // alert("sound on")
-                        play();
-                    }
-                }
+                        const isNewMessage =
+                            !oldConv || oldConv.messageId !== newConv.messageId;
 
+                        const isOpenConversation =
+                            currentOpenId === newConv.conversationId?.toString();
 
-                if (currentOpenId && incomingConvId && currentOpenId === incomingConvId) {
-                    fetchMessages(currentOpenId);
-                }
-            };
+                        // ✅ STEP 3: If this is the open chat AND has new message → append it
+                        if (isNewMessage && isOpenConversation) {
+                            if (newConv.messageText && newConv.messageText.trim() !== "") {
+                                setMessages((prev) => {
+                                    // Prevent duplicate
+                                    const isDuplicate = prev.some(
+                                        (m) =>
+                                            (m.text || m.messageText) === newConv.messageText &&
+                                            m.messageId === newConv.messageId
+                                    );
+                                    if (isDuplicate) return prev;
 
-            socket.on("receive_message", handleIncomingMessage);
+                                    return [
+                                        ...prev,
+                                        {
+                                            text: newConv.messageText,
+                                            messageById: newConv.userId, // user sent it
+                                            conversationId: newConv.conversationId,
+                                            messageId: newConv.messageId,
+                                        },
+                                    ];
+                                });
+                            }
 
-            return () => {
-                socket.off("receive_message", handleIncomingMessage);
-            };
+                            // 🔔 Play sound for new message
+                            play();
+                        }
+                    });
+
+                    // ✅ STEP 4: Update sidebar + save to ref
+                    prevConversationsRef.current = newConversations;
+                    setConversations(newConversations);
+                })
+                .catch(err => console.error("❌ Fetch error:", err));
         };
 
-        if (socket.connected) {
-            // ✅ already connected
-            return attachListener();
-        } else {
-            // ⏳ wait for connect
-            socket.once("connect", () => {
-                attachListener();
-            });
-        }
-    }, []);
+        socket.on("receive_message", handleIncomingMessage);
+        return () => socket.off("receive_message", handleIncomingMessage);
+    }, [adminId]);
 
+    useEffect(() => {
+        if (!selectedConversation) return;
+
+        const updated = conversations.find(
+            (c) =>
+                c.conversationId?.toString() ===
+                selectedConversation.conversationId?.toString()
+        );
+
+        if (updated) {
+            setSelectedConversation(updated);
+        }
+    }, [conversations]);
 
     useEffect(() => {
         const handleConnect = async () => {
@@ -284,7 +346,10 @@ const HumanChat = () => {
                         socketId: socket.id,
                     }),
                 });
-
+                if (selectedIdRef.current) {
+                    socket.emit("join_room", { conversationId: selectedIdRef.current });
+                    console.log("🔁 Re-joined room:", selectedIdRef.current);
+                }
                 console.log("✅ Admin socket mapped");
             }
         };

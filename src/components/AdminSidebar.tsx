@@ -1,4 +1,4 @@
-import { LayoutGrid, LogOut, MessageCircle, ReceiptText, UserRound } from "lucide-react";
+import { CodeXml, LayoutGrid, LogOut, MessageCircle, ReceiptText, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -81,6 +81,17 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                   onClick={() => navigate("/invoice")}
                 >
                   <ReceiptText /> Invoice
+                </a>
+              </li>
+
+              <li>
+                <a
+                  className={
+                    location.pathname === "/integration" ? "active" : ""
+                  }
+                  onClick={() => navigate("/integration")}
+                >
+                  <CodeXml /> Integration
                 </a>
               </li>
             </>

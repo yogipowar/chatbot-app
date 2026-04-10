@@ -13,6 +13,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OwnerAccount from './components/OwnerAccount';
 import Invoice from './components/Invoice';
+import Integration from './components/Integration';
 
 function App() {
   const [auth, setAuth] = useState({ isLoggedIn: false, role: '' });
@@ -39,14 +40,15 @@ function App() {
     <>
       <Router>
         <Routes>
-          <Route path="/" element={<Chatbot />} />
+          <Route path="/chatbot" element={<Chatbot />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/*" element={<AdminPanel />} />
           <Route path="/human-chat" element={<HumanChat />} />
           <Route path="/dashboard" element={<OwnerDashboard />} />
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/my-account" element={<OwnerAccount />} />
-          <Route path="/plans" element={<Plans />} />
+          <Route path="/integration" element={<Integration />} />
+          <Route path="/" element={<Plans />} />
         </Routes>
       </Router>
       <ToastContainer position="top-right" autoClose={3000} />
