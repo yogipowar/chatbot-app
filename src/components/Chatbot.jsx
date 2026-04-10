@@ -54,11 +54,11 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = '36';
-
     // const params = new URLSearchParams(window.location.search);
-    // const id = params.get("websiteId");
+    // const id = '36';
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
