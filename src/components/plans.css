@@ -527,6 +527,44 @@
     border-radius: 100px;
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* space for icon */
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #666;
+}
+
+.modal-footer-text {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+.login-link {
+    color: #007bff;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .landing-nav {

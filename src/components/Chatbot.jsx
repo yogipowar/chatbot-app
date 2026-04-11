@@ -55,7 +55,7 @@ function Chatbot() {
 
   useEffect(() => {
     // const params = new URLSearchParams(window.location.search);
-    // const id = '36';
+    // const id = '64';
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
@@ -437,15 +437,11 @@ function Chatbot() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!conversationId) return;
+ useEffect(() => {
+  if (!conversationId) return;
 
-    const interval = setInterval(() => {
-      checkConversationStatus(conversationId);
-    }, 3000); // every 3 sec
-
-    return () => clearInterval(interval);
-  }, [conversationId]);
+  checkConversationStatus(conversationId); // ✅ only once when ID changes
+}, [conversationId]);
 
   useEffect(() => {
     const handleConnect = async () => {
