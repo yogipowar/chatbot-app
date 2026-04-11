@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import './plans.css';
 
 // --- Sub-Component: AddAdminModal ---
 const AddAdminModal = ({ onClose, onSuccess }) => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [resourceType, setResourceType] = useState("pdf");
+    const [resourceType, setResourceType] = useState("sitemap");
     const [sitemapValue, setSitemapValue] = useState("");
     const [pdfFile, setPdfFile] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleResourceChange = (type) => {
         setResourceType(type);
@@ -82,25 +86,29 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                     </div>
                     <div className="form-group">
                         <label>Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Create a password"
-                            required
-                        />
+
+                        <div className="password-wrapper">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Create a password"
+                                required
+                            />
+
+                            <span
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </span>
+                        </div>
                     </div>
+
                     <div className="form-group">
                         <label>Knowledge Source</label>
+
                         <div className="radio-group">
-                            <label className={resourceType === 'pdf' ? 'active' : ''}>
-                                <input
-                                    type="radio"
-                                    checked={resourceType === "pdf"}
-                                    onChange={() => handleResourceChange("pdf")}
-                                />
-                                PDF Document
-                            </label>
                             <label className={resourceType === 'sitemap' ? 'active' : ''}>
                                 <input
                                     type="radio"
@@ -109,6 +117,15 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                                 />
                                 Sitemap URL
                             </label>
+                            <label className={resourceType === 'pdf' ? 'active' : ''}>
+                                <input
+                                    type="radio"
+                                    checked={resourceType === "pdf"}
+                                    onChange={() => handleResourceChange("pdf")}
+                                />
+                                PDF Document
+                            </label>
+
                         </div>
                     </div>
                     <div className="form-group">
@@ -141,6 +158,16 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                             {submitting ? "Processing..." : "Create Account"}
                         </button>
                     </div>
+                    <div className="modal-footer-text">
+                        Already have an account?{" "}
+                        <span
+                            className="login-link"
+                            onClick={() => navigate("/login")}
+                        >
+                            Login
+                        </span>
+                    </div>
+
                 </form>
             </div>
         </div>
@@ -151,7 +178,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
 const Plans = () => {
     // 1. Navigation State
     const [isScrolled, setIsScrolled] = useState(false);
-    
+
     // 2. Billing State
     const [billingCycle, setBillingCycle] = useState('monthly');
     const elitePrice = billingCycle === 'monthly' ? 99 : 79;
@@ -250,7 +277,7 @@ const Plans = () => {
             <section className="landing-pricing" id="pricing">
                 <div className="landing-section-label">Pricing</div>
                 <h2 className="landing-section-title">Choose Your Plan</h2>
-                
+
                 {/* Billing Toggle */}
                 <div className="billing-toggle">
                     <button
@@ -281,8 +308,8 @@ const Plans = () => {
                                 <li key={f}><span className="pricing-check">✓</span> {f}</li>
                             ))}
                         </ul>
-                        <button 
-                            className="pricing-btn pricing-btn-primary" 
+                        <button
+                            className="pricing-btn pricing-btn-primary"
                             onClick={() => setIsModalOpen(true)}
                         >
                             Get Elite Plan
@@ -308,9 +335,9 @@ const Plans = () => {
 
             {/* Modal Logic */}
             {isModalOpen && (
-                <AddAdminModal 
-                    onClose={() => setIsModalOpen(false)} 
-                    onSuccess={handleSuccess} 
+                <AddAdminModal
+                    onClose={() => setIsModalOpen(false)}
+                    onSuccess={handleSuccess}
                 />
             )}
 
