@@ -53,6 +53,15 @@
     background: var(--brand-gradient);
 }
 
+.clearChatBtn {
+  background: #fff7f7;
+  border: none;
+  color: #ff4d4f;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+
 .humanConnectBtn {
     background: #f1f5f9;
     border: 1px solid #e2e8f0;

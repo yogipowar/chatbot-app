@@ -8,9 +8,28 @@ import { socket } from "../components/socket"
 import { useSound } from "react-sounds";
 import notification from "../../public/notification2.mp3";
 
+const saveChatToLocal = (question, data) => {
+  try {
+    const existing = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+    const newEntry = {
+      question,
+      data,
+      timestamp: new Date().toISOString()
+    };
+
+    // ✅ Keep only last 50 messages
+    const updated = [...existing, newEntry].slice(-50);
+
+    localStorage.setItem("chatHistory", JSON.stringify(updated));
+  } catch (err) {
+    console.error("LocalStorage Error:", err);
+  }
+};
+
 function Chatbot() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! How can I help you with Scrollosoft today?" }
+    { sender: "bot", text: "Hello! How can I help you today?" }
   ]);
 
   const [input, setInput] = useState("");
@@ -54,11 +73,11 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '64';
-
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = '64';
+
+    // const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
 
     console.log("Website ID:", id);
 
@@ -148,6 +167,8 @@ function Chatbot() {
 
       const data = await response.json();
       const botResponse = data?.data || "No response received";
+
+      saveChatToLocal(userQuestion, botResponse);
 
       setMessages((prev) => [
         ...prev,
@@ -437,11 +458,11 @@ function Chatbot() {
     };
   }, []);
 
- useEffect(() => {
-  if (!conversationId) return;
+  useEffect(() => {
+    if (!conversationId) return;
 
-  checkConversationStatus(conversationId); // ✅ only once when ID changes
-}, [conversationId]);
+    checkConversationStatus(conversationId); // ✅ only once when ID changes
+  }, [conversationId]);
 
   useEffect(() => {
     const handleConnect = async () => {
@@ -569,6 +590,35 @@ function Chatbot() {
     };
   }, []);
 
+  const clearChatHistory = () => {
+    localStorage.removeItem("chatHistory");
+
+    // Reset UI messages to default
+    setMessages([
+      { sender: "bot", text: "Hello! How can I help you with Scrollosoft today?" }
+    ]);
+  };
+
+  useEffect(() => {
+    const savedChats = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+    if (savedChats.length > 0) {
+      const formattedMessages = [];
+
+      savedChats.forEach((chat) => {
+        formattedMessages.push({
+          sender: "user",
+          text: chat.question
+        });
+        formattedMessages.push({
+          sender: "bot",
+          text: chat.data
+        });
+      });
+
+      setMessages(formattedMessages);
+    }
+  }, []);
 
   return (
     <div className="chatbotContainer">
@@ -576,7 +626,13 @@ function Chatbot() {
         <div className="headerLeft">
           <span>AI Support</span>
         </div>
-
+        {
+          activeTab === "ai" && (
+            <button className="clearChatBtn" onClick={clearChatHistory}>
+              Clear Chat
+            </button>
+          )
+        }
 
       </div>
 

@@ -157,6 +157,16 @@ const LoginPage = () => {
               {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>
+
+          {/* <div className="modal-footer-text">
+            Don't have an account?{" "}
+            <span
+              className="login-link"
+              onClick={() => navigate("/")}
+            >
+              Sign Up
+            </span>
+          </div> */}
         </div>
       </div>
     </div>
