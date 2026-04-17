@@ -250,7 +250,7 @@ const Plans = () => {
                     <span className="landing-badge-dot" />
                     AI-Powered for Business
                 </div>
-                <h1>Turn Website Visitors Into <span>Paying Customers</span></h1>
+                <h1>Add AI Chatbot to Your Website in 2 Minutes <span>Capture Leads 24/7 </span></h1>
                 <p>Deploy an intelligent AI chatbot that engages visitors 24/7, answers questions instantly, and converts leads — all on autopilot.</p>
                 <div className="landing-hero-buttons">
                     <button className="btn-primary" onClick={() => setIsModalOpen(true)}>Start Free Trial</button>
