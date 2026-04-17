@@ -14,6 +14,12 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -78,87 +84,136 @@ const LoginPage = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!forgotEmail || !newPassword) {
+      setForgotMessage("Please fill all fields");
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotMessage("");
+
+    try {
+      const response = await fetch(
+        "https://chatbotapi.scrollosoft.com/users/change-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: forgotEmail,
+            newPassword: newPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.status) {
+        setForgotMessage("Password updated successfully!");
+        setTimeout(() => {
+          setShowForgotModal(false);
+          setForgotEmail("");
+          setNewPassword("");
+          setForgotMessage("");
+        }, 1500);
+      } else {
+        setForgotMessage(data.message || "Failed to update password");
+      }
+    } catch (err) {
+      setForgotMessage("Something went wrong");
+    }
+
+    setForgotLoading(false);
+  };
+
   return (
-    <div className="login-container">
-      {/* LEFT SIDE */}
-      {/* Top Right Circles */}
-      <div className="circles">
-        <div className="circle big"></div>
-        <div className="circle small"></div>
-      </div>
-      <div className="login-left">
-        <div className="overlay"></div>
+    <>
+      <div className="login-container">
+        {/* LEFT SIDE */}
+        {/* Top Right Circles */}
+        <div className="circles">
+          <div className="circle big"></div>
+          <div className="circle small"></div>
+        </div>
+        <div className="login-left">
+          <div className="overlay"></div>
 
-        {/* Top Left Logo */}
-        <div className="logo">
-          ⚡ WCH BOT
+          {/* Top Left Logo */}
+          <div className="logo">
+            ⚡ WCH BOT
+          </div>
+
+
+
+          {/* Bottom Text */}
+          <div className="left-text">
+            <p>
+              Let your AI agent handle every conversation. So you can focus on
+              growing your business.
+            </p>
+          </div>
         </div>
 
+        {/* RIGHT SIDE */}
+        <div className="login-right">
+          <div className="login-box">
+            <h1>WELCOME BACK</h1>
+            <p className="subtitle">
+              Enter your email and password to access your account
+            </p>
 
+            {error && <div className="error">{error}</div>}
 
-        {/* Bottom Text */}
-        <div className="left-text">
-          <p>
-            Let your AI agent handle every conversation. So you can focus on
-            growing your business.
-          </p>
-        </div>
-      </div>
-
-      {/* RIGHT SIDE */}
-      <div className="login-right">
-        <div className="login-box">
-          <h1>WELCOME BACK</h1>
-          <p className="subtitle">
-            Enter your email and password to access your account
-          </p>
-
-          {error && <div className="error">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div className="form-group password-group">
-              <label>Password</label>
-
-              <div className="password-wrapper">
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Email</label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
                   required
                 />
+              </div>
 
-                <span
-                  className="eye-icon"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
+              <div className="form-group password-group">
+                <label>Password</label>
+
+                <div className="password-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+
                   <span
                     className="eye-icon"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    <span
+                      className="eye-icon"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </span>
                   </span>
+                </div>
+              </div>
+              <div className="forgot-password">
+                <span onClick={() => setShowForgotModal(true)}>
+                  Forgot Password?
                 </span>
               </div>
-            </div>
+              <button type="submit" disabled={loading} className="login-btn">
+                {loading ? "Signing In..." : "Sign In"}
+              </button>
+            </form>
 
-            <button type="submit" disabled={loading} className="login-btn">
-              {loading ? "Signing In..." : "Sign In"}
-            </button>
-          </form>
-
-          {/* <div className="modal-footer-text">
+            {/* <div className="modal-footer-text">
             Don't have an account?{" "}
             <span
               className="login-link"
@@ -167,9 +222,57 @@ const LoginPage = () => {
               Sign Up
             </span>
           </div> */}
+          </div>
         </div>
       </div>
-    </div>
+      {showForgotModal && (
+        <div className="forgot-overlay">
+          <div className="forgot-modal">
+            <h2>Reset Password</h2>
+
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+            />
+
+            <div className="password-wrapper">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+
+              <span
+                className="eye-icon"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </span>
+            </div>
+
+            {forgotMessage && (
+              <p className="forgot-message">{forgotMessage}</p>
+            )}
+
+            <div className="forgot-buttons">
+
+              <button
+                className="cancel-btn"
+                onClick={() => setShowForgotModal(false)}
+              >
+                Cancel
+              </button>
+              <button onClick={handleForgotPassword} disabled={forgotLoading}>
+                {forgotLoading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

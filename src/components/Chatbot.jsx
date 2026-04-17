@@ -105,6 +105,27 @@ function Chatbot() {
       if (result.status && result.user) {
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
+
+        // ✅ APPLY COLORS FROM API
+        const primary = result.user.primaryColor || "#009DE1";
+        const secondary = result.user.secondaryColor || "#0488c1";
+
+        document.documentElement.style.setProperty("--primary-color", primary);
+        document.documentElement.style.setProperty("--secondary-color", secondary);
+      }
+
+      const position = result.user.chatPosition || "right";
+
+      const chatbot = document.querySelector(".chatbotContainer");
+
+      if (chatbot) {
+        chatbot.style.left = position === "left" ? "0px" : "auto";
+        chatbot.style.right = position === "right" ? "0px" : "auto";
+      }
+
+      if (result.status && result.user) {
+        const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
+        setActiveUrl(urlToUse);
       }
     } catch (error) {
       console.error("Error fetching user details:", error);

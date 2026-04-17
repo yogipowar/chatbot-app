@@ -11,6 +11,9 @@ const OwnerAccount = () => {
     const [formData, setFormData] = useState({
         username: "",
         sitemapUrl: "",
+        primaryColor: "#009DE1",
+        secondaryColor: "#0488c1",
+        chatPosition: "right",
     });
 
     const [pdfFile, setPdfFile] = useState(null);
@@ -40,6 +43,9 @@ const OwnerAccount = () => {
                 setFormData({
                     username: data.user.username || "",
                     sitemapUrl: data.user.sitemapUrl || "",
+                    primaryColor: data.user.primaryColor || "#009DE1",
+                    secondaryColor: data.user.secondaryColor || "#0488c1",
+                    chatPosition: data.user.chatPosition || "right",
                 });
             }
         } catch (err) {
@@ -89,6 +95,10 @@ const OwnerAccount = () => {
             if (pdfFile) {
                 form.append("uploaded_file", pdfFile);
             }
+
+            form.append("primaryColor", formData.primaryColor);
+            form.append("secondaryColor", formData.secondaryColor);
+            form.append("chatPosition", formData.chatPosition);
 
             const res = await fetch(
                 `https://chatbotapi.scrollosoft.com/users/update-user-files/${user.id}`,
@@ -186,6 +196,68 @@ const OwnerAccount = () => {
                                 value={user?.subscription_status || ""}
                                 disabled
                             />
+                        </div>
+                    </div>
+                    <div className="form-flex">
+                        {/* Primary Color */}
+                        <div className="form-group">
+                            <label>Primary Color</label>
+                            <div style={{ display: "flex" }}>
+                                <p>{formData.primaryColor}</p>
+                                <input
+                                    type="color"
+                                    name="primaryColor"
+                                    value={formData.primaryColor}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Secondary Color */}
+                        <div className="form-group">
+                            <label>Secondary Color</label>
+                            <div style={{ display: "flex" }}>
+                                <p>{formData.secondaryColor}</p>
+                                <input
+                                    type="color"
+                                    name="secondaryColor"
+                                    value={formData.secondaryColor}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Chat Position */}
+                    <div className="form-group">
+                        <label>Chat Position</label>
+
+                        <div className="radio-group">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="chatPosition"
+                                    value="left"
+                                    checked={formData.chatPosition === "left"}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                                Left
+                            </label>
+
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="chatPosition"
+                                    value="right"
+                                    checked={formData.chatPosition === "right"}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                                Right
+                            </label>
                         </div>
                     </div>
                     {/* Buttons */}
