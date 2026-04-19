@@ -46,6 +46,7 @@ function Chatbot() {
   const [humanMessages, setHumanMessages] = useState([]);
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [isActive, setIsActive] = useState(true);
 
   const textareaRef = useRef(null);
 
@@ -74,7 +75,7 @@ function Chatbot() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = '63';
+    const id = '64';
 
     // const params = new URLSearchParams(window.location.search);
     // const id = params.get("websiteId");
@@ -105,6 +106,9 @@ function Chatbot() {
       if (result.status && result.user) {
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
+
+        const activeStatus = Number(result.user.isActive) === 1;
+        setIsActive(activeStatus);
 
         // ✅ APPLY COLORS FROM API
         const primary = result.user.primaryColor || "#009DE1";
@@ -167,7 +171,7 @@ function Chatbot() {
 
     const userQuestion = input;
 
-    setMessages((prev) => [...prev, { sender: "user", text: userQuestion }]);
+    setMessages((prev) => [...prev, { sender: "user", text: userQuestion, createdAt: new Date().toISOString(), }]);
     setInput("");
     setIsLoading(true);
 
@@ -553,6 +557,7 @@ function Chatbot() {
     const tempMessage = {
       text: userMessage,
       messageById: userId,
+      createdAt: new Date().toISOString(),
     };
 
     setHumanMessages((prev) => [...prev, tempMessage]);
@@ -641,6 +646,35 @@ function Chatbot() {
     }
   }, []);
 
+  const formatMessageTime = (dateString) => {
+    if (!dateString) return "";
+
+    const now = new Date();
+    const msgTime = new Date(dateString);
+
+    const diffMs = now - msgTime;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffMinutes < 2) return "Now";
+
+    if (diffMinutes >= 2 && diffMinutes <= 5)
+      return `${diffMinutes} min ago`;
+
+    if (diffHours < 24) {
+      return msgTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    return msgTime.toLocaleString([], {
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div className="chatbotContainer">
       <div className="chatHeader">
@@ -674,97 +708,107 @@ function Chatbot() {
         </div>
       )}
 
-      <div className="chatMessages">
-        {/* AI CHAT */}
-        {activeTab === "ai" && (
-          <>
-            {messages.map((msg, index) => (
-              <div key={index} className={`messageRow ${msg.sender}`}>
-                {msg.sender === "bot" && (
-                  <div className="botIcon">
-                    <BotIcon isTyping={false} />
-                  </div>
-                )}
-                <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
-                  {msg.sender === "bot" ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {msg.text}
-                    </ReactMarkdown>
-                  ) : (
-                    msg.text
+      {!isActive ? (
+        <div className="inactive-banner">
+          🚫 Chatbot is currently inactive. Please contact the admin.
+        </div>
+      ) : (
+
+        <div className="chatMessages">
+          {/* AI CHAT */}
+          {activeTab === "ai" && (
+            <>
+              {messages.map((msg, index) => (
+                <div key={index} className={`messageRow ${msg.sender}`}>
+                  {msg.sender === "bot" && (
+                    <div className="botIcon">
+                      <BotIcon isTyping={false} />
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
-            <div ref={aiMessagesEndRef} />
-          </>
-        )}
-
-
-        {/* HUMAN CHAT */}
-        {activeTab === "human" && (
-          <div className="humanChatContainer">
-            {isHumanLoading ? (
-              <p>Loading messages...</p>
-            ) : humanMessages.length === 0 ? (
-              <p>No messages yet</p>
-            ) : (
-              <>
-                {humanMessages.map((msg, index) => (
-                  <div key={index} className={`messageRow ${msg.messageById == userId ? "user" : "bot"}`}>
-                    {msg.messageById == websiteId && (
-                      <div className="botIcon">
-                        {/* <BotIcon isTyping={false} /> */}
-                        <User size={18} />
-                      </div>
-                    )}
-                    <div className={`messageBubble `}>
+                  <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
+                    {msg.sender === "bot" ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.text}
                       </ReactMarkdown>
-                    </div>
+                    ) : (
+                      msg.text
+                    )}
                   </div>
-                ))}
-                <div ref={humanMessagesEndRef} />
-              </>
-            )}
-          </div>
-
-        )}
+                </div>
+              ))}
+              <div ref={aiMessagesEndRef} />
+            </>
+          )}
 
 
-
-        {isLoading && activeTab === "ai" && (
-          <div className="messageRow bot">
-            <div className="botIcon">
-              <BotIcon isTyping={true} />
+          {/* HUMAN CHAT */}
+          {activeTab === "human" && (
+            <div className="humanChatContainer">
+              {isHumanLoading ? (
+                <p>Loading messages...</p>
+              ) : humanMessages.length === 0 ? (
+                <p>No messages yet</p>
+              ) : (
+                <>
+                  {humanMessages.map((msg, index) => (
+                    <div key={index} className={`messageRow ${msg.messageById == userId ? "user" : "bot"}`}>
+                      {msg.messageById == websiteId && (
+                        <div className="botIcon">
+                          {/* <BotIcon isTyping={false} /> */}
+                          <User size={18} />
+                        </div>
+                      )}
+                      <div className={`messageBubble `}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.text}
+                        </ReactMarkdown>
+                        <div className="msg-time">
+                          {formatMessageTime(msg.createdAt)}
+                        </div>
+                      </div> 
+                    </div>
+                  ))}
+                  <div ref={humanMessagesEndRef} />
+                </>
+              )}
             </div>
-            <div className="messageBubble typing-container">
-              <div className="typing-dots">
-                Thinking <span>.</span><span>.</span><span>.</span>
+
+          )}
+
+
+
+          {isLoading && activeTab === "ai" && (
+            <div className="messageRow bot">
+              <div className="botIcon">
+                <BotIcon isTyping={true} />
+              </div>
+              <div className="messageBubble typing-container">
+                <div className="typing-dots">
+                  Thinking <span>.</span><span>.</span><span>.</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+      {isActive ? (
+        <div className="chatInputArea">
+          <textarea
+            ref={textareaRef}
+            rows="1"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Ask something..."
+            disabled={!isActive || isLoading || !activeUrl}
+            className="auto-expand-input"
+          />
 
-      <div className="chatInputArea">
-        <textarea
-          ref={textareaRef}
-          rows="1"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Ask something..."
-          disabled={isLoading || !activeUrl}
-          className="auto-expand-input"
-        />
-
-        <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={isLoading || !activeUrl}>
-          <Send size={18} />
-        </button>
-      </div>
-
+          <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={!isActive || isLoading || !activeUrl}>
+            <Send size={18} />
+          </button>
+        </div>
+      ) : null}
       {/* HUMAN CONNECT DRAWER */}
       {showHumanDrawer && (
         <div className="humanDrawerOverlay">

@@ -6,6 +6,7 @@ import { socket } from "../components/socket";
 import { useSound } from 'react-sounds';
 import notification from "../../public/notification1.mp3";
 import SubscriptionModal from "./SubscriptionModal";
+import { ChevronLeft } from "lucide-react";
 
 const HumanChat = () => {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -24,20 +25,20 @@ const HumanChat = () => {
 
     // --- API: Fetch Sidebar ---
     const fetchConversations = async () => {
-    try {
-        const res = await fetch(
-            `https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`
-        );
-        const data = await res.json();
+        try {
+            const res = await fetch(
+                `https://chatbotapi.scrollosoft.com/conversation/admin-conversation-list?adminId=${adminId}`
+            );
+            const data = await res.json();
 
-        if (data.status) {
-            setConversations(data.data);
-            prevConversationsRef.current = data.data; // ✅ ADD THIS LINE
+            if (data.status) {
+                setConversations(data.data);
+                prevConversationsRef.current = data.data; // ✅ ADD THIS LINE
+            }
+        } catch (err) {
+            console.error("❌ Error fetching conversations:", err);
         }
-    } catch (err) {
-        console.error("❌ Error fetching conversations:", err);
-    }
-};
+    };
 
     const filteredConversations = conversations.filter(
         (conv) => conv.status === statusFilter
@@ -58,7 +59,8 @@ const HumanChat = () => {
                     .filter((msg: any) => msg.text && msg.text.trim() !== "")
                     .map((msg: any) => ({
                         ...msg,
-                        conversationId: conversationId // ✅ attach manually
+                        conversationId: conversationId, // ✅ attach manually
+                        createdAt: msg.createdAt,
                     }));
 
                 setMessages(filteredMessages);
@@ -191,7 +193,21 @@ const HumanChat = () => {
     const handleCloseConversation = async () => {
         if (!selectedConversation) return;
 
+        const convId = selectedConversation.conversationId;
+
         try {
+            // ✅ 1. SEND "Admin closed chat" message
+            await fetch("https://chatbotapi.scrollosoft.com/conversation/send-message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: "Admin closed this chat",
+                    messageById: adminId,
+                    conversationId: convId,
+                }),
+            });
+
+            // ✅ 2. CLOSE CONVERSATION
             await fetch(
                 `https://chatbotapi.scrollosoft.com/conversation/chnage-status`,
                 {
@@ -199,15 +215,15 @@ const HumanChat = () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         status: "closed",
-                        conversationId: selectedConversation.conversationId,
+                        conversationId: convId,
                     }),
                 }
             );
 
-            // ✅ UI UPDATE
+            // ✅ 3. UPDATE UI
             setConversations((prev) =>
                 prev.map((c) =>
-                    c.conversationId === selectedConversation.conversationId
+                    c.conversationId === convId
                         ? { ...c, status: "closed" }
                         : c
                 )
@@ -216,6 +232,16 @@ const HumanChat = () => {
             setSelectedConversation((prev: any) =>
                 prev ? { ...prev, status: "closed" } : prev
             );
+
+            // ✅ 4. OPTIONAL: Show message instantly in UI
+            setMessages((prev) => [
+                ...prev,
+                {
+                    text: "Admin closed this chat",
+                    messageById: adminId,
+                    createdAt: new Date().toISOString(), // ✅ ADD THIS
+                },
+            ]);
 
         } catch (err) {
             console.error("❌ Close error:", err);
@@ -231,7 +257,14 @@ const HumanChat = () => {
         const text = input;
         const convId = selectedConversation.conversationId;
 
-        setMessages((prev) => [...prev, { text, messageById: adminId }]);
+        setMessages((prev) => [
+            ...prev,
+            {
+                text,
+                messageById: adminId,
+                createdAt: new Date().toISOString(), // ✅ ADD THIS
+            },
+        ]);
         setInput("");
 
         try {
@@ -294,6 +327,7 @@ const HumanChat = () => {
                                             messageById: newConv.userId, // user sent it
                                             conversationId: newConv.conversationId,
                                             messageId: newConv.messageId,
+                                            createdAt: new Date().toISOString(),
                                         },
                                     ];
                                 });
@@ -361,6 +395,44 @@ const HumanChat = () => {
         };
     }, []);
 
+    const handleBack = () => {
+        setSelectedConversation(null);
+        setMessages([]);
+        selectedIdRef.current = null;
+    };
+
+    const formatMessageTime = (dateString: string) => {
+        if (!dateString) return "";
+
+        const now = new Date();
+        const msgTime = new Date(dateString);
+
+        const diffMs = now.getTime() - msgTime.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+        // ✅ Less than 2 minutes
+        if (diffMinutes < 2) return "Now";
+
+        // ✅ Between 2 and 5 minutes
+        if (diffMinutes >= 2 && diffMinutes <= 5) return `${diffMinutes} min ago`;
+
+        // ✅ Less than 24 hours → show time
+        if (diffHours < 24) {
+            return msgTime.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        }
+
+        // ✅ More than 24 hours → show day + time
+        return msgTime.toLocaleString([], {
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
     return (
         <div className="human-chat-layout">
             <AdminSidebar onLogout={() => { localStorage.removeItem("isLoggedIn"); navigate("/login"); }} />
@@ -413,7 +485,13 @@ const HumanChat = () => {
                         <div className="no-chat">Select a conversation</div>
                     ) : (
                         <>
-                            <div className="chat-header"><h4>{selectedConversation.username}</h4>
+                            <div className="chat-header">
+                                <div className="chat-header-left">
+                                    <button className="back-btn" onClick={handleBack}>
+                                        <ChevronLeft />
+                                    </button>
+                                    <h4>{selectedConversation.username}</h4>
+                                </div>
                                 {selectedConversation.status !== "closed" && (
                                     <button onClick={handleCloseConversation} className="close-btn">
                                         Close Chat
@@ -426,6 +504,9 @@ const HumanChat = () => {
                                         <div className={`chat-bubble ${Number(msg.messageById) === adminId ? "right" : "left"}`}>
                                             {/* Key names vary between API and Socket payload */}
                                             {msg.text || msg.messageText}
+                                        </div>
+                                        <div className="msg-time">
+                                            {formatMessageTime(msg.createdAt)}
                                         </div>
                                     </div>
                                 ))}

@@ -14,6 +14,7 @@ const OwnerAccount = () => {
         primaryColor: "#009DE1",
         secondaryColor: "#0488c1",
         chatPosition: "right",
+        isActive: 1,
     });
 
     const [pdfFile, setPdfFile] = useState(null);
@@ -46,6 +47,7 @@ const OwnerAccount = () => {
                     primaryColor: data.user.primaryColor || "#009DE1",
                     secondaryColor: data.user.secondaryColor || "#0488c1",
                     chatPosition: data.user.chatPosition || "right",
+                    isActive: String(data.user.isActive ?? 1),
                 });
             }
         } catch (err) {
@@ -59,10 +61,17 @@ const OwnerAccount = () => {
 
     // ✅ Input change
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        const { name, value, type, checked } = e.target;
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]:
+                name === "isActive"
+                    ? Number(value)
+                    : type === "checkbox"
+                        ? checked
+                        : value,
+        }));
     };
 
     // ✅ PDF change
@@ -99,6 +108,7 @@ const OwnerAccount = () => {
             form.append("primaryColor", formData.primaryColor);
             form.append("secondaryColor", formData.secondaryColor);
             form.append("chatPosition", formData.chatPosition);
+            form.append("isActive", formData.isActive);
 
             const res = await fetch(
                 `https://chatbotapi.scrollosoft.com/users/update-user-files/${user.id}`,
@@ -202,7 +212,7 @@ const OwnerAccount = () => {
                         {/* Primary Color */}
                         <div className="form-group">
                             <label>Primary Color</label>
-                            <div style={{ display: "flex" }}>
+                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                 <p>{formData.primaryColor}</p>
                                 <input
                                     type="color"
@@ -217,7 +227,7 @@ const OwnerAccount = () => {
                         {/* Secondary Color */}
                         <div className="form-group">
                             <label>Secondary Color</label>
-                            <div style={{ display: "flex" }}>
+                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                                 <p>{formData.secondaryColor}</p>
                                 <input
                                     type="color"
@@ -257,6 +267,36 @@ const OwnerAccount = () => {
                                     disabled={!isEditing}
                                 />
                                 Right
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Visibility Status</label>
+
+                        <div className="radio-group">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="isActive"
+                                    value="1"
+                                    checked={formData.isActive === "1"}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                                Active
+                            </label>
+
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="isActive"
+                                    value="0"
+                                    checked={formData.isActive === "0"}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                />
+                                Inactive
                             </label>
                         </div>
                     </div>

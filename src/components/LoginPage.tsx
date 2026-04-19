@@ -85,8 +85,8 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotEmail || !newPassword) {
-      setForgotMessage("Please fill all fields");
+    if (!forgotEmail) {
+      setForgotMessage("Please enter email");
       return;
     }
 
@@ -94,37 +94,53 @@ const LoginPage = () => {
     setForgotMessage("");
 
     try {
+      const resetLink = `${window.location.origin}/change-password?email=${forgotEmail}`;
+
       const response = await fetch(
-        "https://chatbotapi.scrollosoft.com/users/change-password",
+        "https://chatbotapi.scrollosoft.com/users/send-email",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            username: forgotEmail,
-            newPassword: newPassword,
+            to: forgotEmail,
+            subject: "Reset Your Password",
+            text: `Reset your password: ${resetLink}`,
+            html: `
+            <h2>Password Reset</h2>
+            <p>Click below to reset your password:</p>
+            <a href="${resetLink}" 
+              style="display:inline-block;padding:10px 20px;background:#009DE1;color:#fff;border-radius:6px;text-decoration:none;">
+              Reset Password
+            </a>
+          `,
           }),
         }
       );
 
       const data = await response.json();
 
-      if (data.status) {
-        setForgotMessage("Password updated successfully!");
+      // ✅ FIX HERE
+      if (data.success) {
+        setForgotMessage("Reset link sent to your email!");
         setTimeout(() => {
           setShowForgotModal(false);
-          setForgotEmail("");
-          setNewPassword("");
-          setForgotMessage("");
+          resetForgotForm(); // ✅ clear after success
         }, 1500);
       } else {
-        setForgotMessage(data.message || "Failed to update password");
+        setForgotMessage(data.message || "Failed to send email");
       }
     } catch (err) {
       setForgotMessage("Something went wrong");
     }
 
+    setForgotLoading(false);
+  };
+
+  const resetForgotForm = () => {
+    setForgotEmail("");
+    setForgotMessage("");
     setForgotLoading(false);
   };
 
@@ -226,9 +242,13 @@ const LoginPage = () => {
         </div>
       </div>
       {showForgotModal && (
-        <div className="forgot-overlay">
-          <div className="forgot-modal">
-            <h2>Reset Password</h2>
+        <div className="forgot-overlay"
+          onClick={() => {
+            setShowForgotModal(false);
+            resetForgotForm();
+          }}>
+          <div className="forgot-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Forgot Password</h2>
 
             <input
               type="email"
@@ -237,36 +257,22 @@ const LoginPage = () => {
               onChange={(e) => setForgotEmail(e.target.value)}
             />
 
-            <div className="password-wrapper">
-              <input
-                type={showNewPassword ? "text" : "password"}
-                placeholder="Enter new password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-
-              <span
-                className="eye-icon"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-              >
-                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </span>
-            </div>
-
             {forgotMessage && (
               <p className="forgot-message">{forgotMessage}</p>
             )}
 
             <div className="forgot-buttons">
-
               <button
-                className="cancel-btn"
-                onClick={() => setShowForgotModal(false)}
+                onClick={() => {
+                  setShowForgotModal(false);
+                  resetForgotForm();
+                }}
               >
                 Cancel
               </button>
+
               <button onClick={handleForgotPassword} disabled={forgotLoading}>
-                {forgotLoading ? "Updating..." : "Update Password"}
+                {forgotLoading ? "Sending..." : "Send Email"}
               </button>
             </div>
           </div>

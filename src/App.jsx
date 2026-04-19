@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 import OwnerAccount from './components/OwnerAccount';
 import Invoice from './components/Invoice';
 import Integration from './components/Integration';
+import ChangePassword from './components/ChangePassword';
 
 function App() {
   const [auth, setAuth] = useState({ isLoggedIn: false, role: '' });
@@ -48,6 +49,7 @@ function App() {
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/my-account" element={<OwnerAccount />} />
           <Route path="/integration" element={<Integration />} />
+          <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/" element={<Plans />} />
         </Routes>
       </Router>
