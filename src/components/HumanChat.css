@@ -258,8 +258,12 @@
 .msg-time {
     font-size: 11px;
     opacity: 0.6;
-    margin-top: -8px;
+    margin-top: 0;
     text-align: right;
+}
+
+.humanChatContainer.msg-time {
+    margin-top: -8px;
 }
 
 .msg-row.left .msg-time {

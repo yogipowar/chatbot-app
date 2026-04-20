@@ -621,7 +621,7 @@ function Chatbot() {
 
     // Reset UI messages to default
     setMessages([
-      { sender: "bot", text: "Hello! How can I help you with Scrollosoft today?" }
+      { sender: "bot", text: "Hello! How can I help you with today?" }
     ]);
   };
 
