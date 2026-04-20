@@ -262,7 +262,7 @@
     text-align: right;
 }
 
-.humanChatContainer.msg-time {
+.humanChatContainer .msg-time {
     margin-top: -8px;
 }
 
