@@ -11,14 +11,9 @@ const OwnerAccount = () => {
     const [formData, setFormData] = useState({
         username: "",
         sitemapUrl: "",
-        primaryColor: "#009DE1",
-        secondaryColor: "#0488c1",
-        chatPosition: "right",
-        isActive: 1,
     });
 
     const [pdfFile, setPdfFile] = useState(null);
-
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -44,10 +39,6 @@ const OwnerAccount = () => {
                 setFormData({
                     username: data.user.username || "",
                     sitemapUrl: data.user.sitemapUrl || "",
-                    primaryColor: data.user.primaryColor || "#009DE1",
-                    secondaryColor: data.user.secondaryColor || "#0488c1",
-                    chatPosition: data.user.chatPosition || "right",
-                    isActive: String(data.user.isActive ?? 1),
                 });
             }
         } catch (err) {
@@ -61,16 +52,11 @@ const OwnerAccount = () => {
 
     // ✅ Input change
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
 
         setFormData((prev) => ({
             ...prev,
-            [name]:
-                name === "isActive"
-                    ? Number(value)
-                    : type === "checkbox"
-                        ? checked
-                        : value,
+            [name]: value,
         }));
     };
 
@@ -105,11 +91,6 @@ const OwnerAccount = () => {
                 form.append("uploaded_file", pdfFile);
             }
 
-            form.append("primaryColor", formData.primaryColor);
-            form.append("secondaryColor", formData.secondaryColor);
-            form.append("chatPosition", formData.chatPosition);
-            form.append("isActive", formData.isActive);
-
             const res = await fetch(
                 `https://chatbotapi.scrollosoft.com/users/update-user-files/${user.id}`,
                 {
@@ -125,7 +106,7 @@ const OwnerAccount = () => {
 
                 setIsEditing(false);
                 setPdfFile(null);
-                fetchUserDetails(); // refresh data
+                fetchUserDetails();
             } else {
                 alert(data.message || "Update failed");
             }
@@ -150,13 +131,13 @@ const OwnerAccount = () => {
                 <div className="account-card">
 
                     <div className="form-flex">
+                        {/* Email */}
                         <div className="form-group">
                             <label>Email</label>
                             <input
                                 type="text"
                                 name="username"
                                 value={formData.username}
-                                onChange={handleChange}
                                 disabled
                             />
                         </div>
@@ -173,6 +154,7 @@ const OwnerAccount = () => {
                             />
                         </div>
                     </div>
+
                     <div className="form-flex">
                         {/* PDF Upload */}
                         <div className="form-group">
@@ -208,98 +190,7 @@ const OwnerAccount = () => {
                             />
                         </div>
                     </div>
-                    <div className="form-flex">
-                        {/* Primary Color */}
-                        <div className="form-group">
-                            <label>Primary Color</label>
-                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                                <p>{formData.primaryColor}</p>
-                                <input
-                                    type="color"
-                                    name="primaryColor"
-                                    value={formData.primaryColor}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                            </div>
-                        </div>
 
-                        {/* Secondary Color */}
-                        <div className="form-group">
-                            <label>Secondary Color</label>
-                            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                                <p>{formData.secondaryColor}</p>
-                                <input
-                                    type="color"
-                                    name="secondaryColor"
-                                    value={formData.secondaryColor}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Chat Position */}
-                    <div className="form-group">
-                        <label>Chat Position</label>
-
-                        <div className="radio-group">
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="chatPosition"
-                                    value="left"
-                                    checked={formData.chatPosition === "left"}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                                Left
-                            </label>
-
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="chatPosition"
-                                    value="right"
-                                    checked={formData.chatPosition === "right"}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                                Right
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Visibility Status</label>
-
-                        <div className="radio-group">
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="isActive"
-                                    value="1"
-                                    checked={formData.isActive === "1"}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                                Active
-                            </label>
-
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="isActive"
-                                    value="0"
-                                    checked={formData.isActive === "0"}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                />
-                                Inactive
-                            </label>
-                        </div>
-                    </div>
                     {/* Buttons */}
                     <div className="button-group">
                         {!isEditing ? (

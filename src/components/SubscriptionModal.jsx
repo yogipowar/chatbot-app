@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import "./SubscriptionModal.css";
 
 const SubscriptionModal = ({ onClose }) => {
-    const [planType, setPlanType] = useState("monthly");
+    const [planType, setPlanType] = useState("annual");
 
     const handleSubscribe = async () => {
         try {
@@ -11,8 +11,8 @@ const SubscriptionModal = ({ onClose }) => {
 
             const planId =
                 planType === "monthly"
-                    ? "plan_SZJyer4QbgJ7iG"
-                    : "plan_SZJzPSvsov16aJ";
+                    ? "plan_SjLyjQcoNLoaNh"
+                    : "plan_SjM13ZdThHlI0l";
 
             const res = await fetch(
                 "https://chatbotapi.scrollosoft.com/users/create-subscription",
@@ -49,7 +49,7 @@ const SubscriptionModal = ({ onClose }) => {
 
     const openRazorpay = (subscriptionId) => {
         const options = {
-            key: "rzp_test_SZJs8LheVmP8lm", 
+            key: "rzp_live_SjLvlTvH7bxRgb", // ✅ LIVE KEY
             subscription_id: subscriptionId,
             name: "wcchatbot",
             description: "Elite Plan Subscription",
@@ -150,8 +150,8 @@ const SubscriptionModal = ({ onClose }) => {
                         </p>
 
                         <h1 className="price">
-                            ${planType === "monthly" ? "99" : "950"}
-                            <span>/{planType === "monthly" ? "month" : "year"}</span>
+                            ${planType === "monthly" ? "25" : "20"}
+                            <span>/{planType === "monthly" ? "month" : "month"}</span>
                         </h1>
 
                         <ul>

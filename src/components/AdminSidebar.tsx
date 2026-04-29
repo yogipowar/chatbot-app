@@ -1,4 +1,4 @@
-import { CodeXml, LayoutGrid, LogOut, MessageCircle, ReceiptText, UserRound } from "lucide-react";
+import { CodeXml, LayoutGrid, LogOut, MessageCircle, Palette, ReceiptText, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -70,6 +70,17 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                   onClick={() => navigate("/my-account")}
                 >
                   <UserRound /> My Account
+                </a>
+              </li>
+
+              <li>
+                <a
+                  className={
+                    location.pathname === "/themes" ? "active" : ""
+                  }
+                  onClick={() => navigate("/themes")}
+                >
+                  <Palette /> Themes
                 </a>
               </li>
 
