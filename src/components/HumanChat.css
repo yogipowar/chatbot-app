@@ -205,6 +205,7 @@
 .username {
   font-weight: 500 !important;
   font-size: 15px;
+  color: #000;
 }
 
 .chat-item p {
@@ -260,6 +261,7 @@
     opacity: 0.6;
     margin-top: 0;
     text-align: right;
+    color: #000;
 }
 
 .humanChatContainer .msg-time {
@@ -304,6 +306,7 @@
 
 .chat-bubble.left {
   background: #F1F1F1;
+  color: #000;
   align-self: flex-start;
   border-top-left-radius: 0;
 }
@@ -328,6 +331,7 @@
   padding: 10px;
   border-radius: 12px;
   border: 1px solid #E2E8F0;
+  color: #000;
   height: 54px;
   background-color: #F8FAFC;
   padding-right: 155px;

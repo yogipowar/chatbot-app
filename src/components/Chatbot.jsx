@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./chatbot.css";
 import BotIcon from "./BotIcon";
-import { socket } from "../components/socket"
+import { socket } from "../components/socket";
 import { useSound } from "react-sounds";
 import notification from "../../public/notification2.mp3";
 
@@ -15,10 +15,9 @@ const saveChatToLocal = (question, data) => {
     const newEntry = {
       question,
       data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
-    // ✅ Keep only last 50 messages
     const updated = [...existing, newEntry].slice(-50);
 
     localStorage.setItem("chatHistory", JSON.stringify(updated));
@@ -29,7 +28,7 @@ const saveChatToLocal = (question, data) => {
 
 function Chatbot() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! How can I help you today?" }
+    { sender: "bot", text: "Hello! How can I help you today?" },
   ]);
 
   const [input, setInput] = useState("");
@@ -47,17 +46,32 @@ function Chatbot() {
   const [isHumanLoading, setIsHumanLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [isActive, setIsActive] = useState(true);
-
+  const [adminEmail, setAdminEmail] = useState("");
+  const firstHumanEmailSentRef = useRef(false);
+  // NEW: email popup mode for first visit only
+  const [emailOnlyMode, setEmailOnlyMode] = useState(false);
+  const [conversationStatus, setConversationStatus] = useState(null);
   const textareaRef = useRef(null);
-
   const aiMessagesEndRef = useRef(null);
   const humanMessagesEndRef = useRef(null);
+  const convIdRef = useRef(conversationId);
+
   const { play } = useSound(notification);
 
   useEffect(() => {
     const savedHasHumanChat = localStorage.getItem("hasHumanChat");
     const savedUserId = localStorage.getItem("userId");
     const savedConversationId = localStorage.getItem("conversationId");
+    const savedEmail = localStorage.getItem("userEmail");
+
+    // NEW FLOW:
+    // First visit / refresh: if email is not stored, open popup.
+    if (!savedEmail) {
+      setEmailOnlyMode(true);
+      setShowHumanDrawer(true);
+    } else {
+      setEmail(savedEmail);
+    }
 
     if (savedHasHumanChat === "true") {
       setHasHumanChat(true);
@@ -74,11 +88,7 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
-    // const params = new URLSearchParams(window.location.search);
-    // const id = '64';
-
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    const id = "97";
 
     console.log("Website ID:", id);
 
@@ -95,22 +105,33 @@ function Chatbot() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({ id }),
         }
       );
 
       const result = await response.json();
 
       if (result.status && result.user) {
+        console.log("Admin/User Details:", result.user);
+
+        const adminMail =
+          result.user.email ||
+          result.user.username ||
+          result.user.adminEmail ||
+          result.user.contactEmail ||
+          "";
+
+        setAdminEmail(adminMail);
+        console.log("Admin email:", adminMail);
+
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
 
         const activeStatus = Number(result.user.isActive) === 1;
         setIsActive(activeStatus);
 
-        // ✅ APPLY COLORS FROM API
         const primary = result.user.primaryColor || "#009DE1";
         const secondary = result.user.secondaryColor || "#0488c1";
 
@@ -118,8 +139,9 @@ function Chatbot() {
         document.documentElement.style.setProperty("--secondary-color", secondary);
       }
 
-      const position = result.user.chatPosition || "right";
 
+
+      const position = result.user.chatPosition || "right";
       const chatbot = document.querySelector(".chatbotContainer");
 
       if (chatbot) {
@@ -135,6 +157,36 @@ function Chatbot() {
       console.error("Error fetching user details:", error);
     }
   };
+
+  const sendEmailToAdmin = async (userMessage) => {
+    const savedEmail = localStorage.getItem("userEmail");
+
+    try {
+      const res = await fetch("https://chatbotapi.scrollosoft.com/users/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: adminEmail,
+          subject: "New Chat Request",
+          text: `New message from ${savedEmail || "User"}: ${userMessage}`,
+          html: `
+            <h2>New Chat Request</h2>
+            <p><strong>User Email:</strong> ${savedEmail || "Not available"}</p>
+            <p><strong>Message:</strong> ${userMessage}</p>
+          `,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Admin Email Response:", data);
+    } catch (err) {
+      console.error("Admin email failed:", err);
+    }
+  };
+
+
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -152,9 +204,6 @@ function Chatbot() {
     }
   }, [messages, humanMessages, activeTab]);
 
-
-
-  // Send message
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -163,15 +212,23 @@ function Chatbot() {
         ...prev,
         {
           sender: "bot",
-          text: "Chatbot is still loading data. Please try again."
-        }
+          text: "Chatbot is still loading data. Please try again.",
+        },
       ]);
       return;
     }
 
     const userQuestion = input;
 
-    setMessages((prev) => [...prev, { sender: "user", text: userQuestion, createdAt: new Date().toISOString(), }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        text: userQuestion,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
     setInput("");
     setIsLoading(true);
 
@@ -181,12 +238,12 @@ function Chatbot() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             question: userQuestion,
-            url: activeUrl
-          })
+            url: activeUrl,
+          }),
         }
       );
 
@@ -199,44 +256,61 @@ function Chatbot() {
         ...prev,
         {
           sender: "bot",
-          text: botResponse
-        }
+          text: botResponse,
+        },
       ]);
 
-      // Detect human connect
       if (botResponse === "CONNECTING TO HUMAN") {
         if (hasHumanChat && conversationId) {
-          // Already connected → just switch tab
           setActiveTab("human");
           fetchHumanMessages(conversationId);
         } else {
-          // First time → show email drawer
-          setShowHumanDrawer(true);
+          const savedEmail = localStorage.getItem("userEmail");
+
+          if (savedEmail) {
+            setEmail(savedEmail);
+            setEmailOnlyMode(false);
+            submitHumanRequest(savedEmail);
+          } else {
+            setEmailOnlyMode(false);
+            setShowHumanDrawer(true);
+          }
         }
       }
-
     } catch (e) {
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "Connection error. Please try again later."
-        }
+          text: "Connection error. Please try again later.",
+        },
       ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const submitHumanRequest = async () => {
-    if (!email) return;
+  const submitHumanRequest = async (emailOverride) => {
+    const finalEmail = emailOverride || email;
+
+    if (!finalEmail) return;
+
+    localStorage.setItem("userEmail", finalEmail);
+
+    // First visit popup only stores email.
+    // It should not create/open human chat yet.
+    if (emailOnlyMode && !emailOverride) {
+      setShowHumanDrawer(false);
+      setEmailOnlyMode(false);
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-
       if (!socket.id) {
         console.log("Socket ID null, waiting for connection...");
+
         await new Promise((resolve) => {
           socket.once("connect", () => {
             resolve();
@@ -256,30 +330,28 @@ function Chatbot() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            username: email,
-            password: email,
-            socketId: socket.id
-          })
+            username: finalEmail,
+            password: finalEmail,
+            socketId: socket.id,
+          }),
         }
       );
 
       const authResult = await authResponse.json();
       console.log("Auth Result:", authResult);
 
-
       if (authResult?.status && authResult?.user?.id) {
         const userId = authResult.user.id;
+
         setUserId(userId);
         localStorage.setItem("userId", userId);
-        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userEmail", finalEmail);
 
         setShowHumanDrawer(false);
-        setEmail("");
 
-        // CALL LIST API
         const listResponse = await fetch(
           `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
         );
@@ -289,31 +361,28 @@ function Chatbot() {
 
         if (listResult?.status) {
           const hasChat = listResult.data.length > 0;
+
           setHasHumanChat(hasChat);
           localStorage.setItem("hasHumanChat", hasChat.toString());
 
-          // CASE 1: NO CONVERSATION → CREATE
           if (!hasChat) {
-            // CREATE CONVERSATION
             const createResponse = await fetch(
               "https://chatbotapi.scrollosoft.com/conversation/create",
               {
                 method: "POST",
                 headers: {
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  // message: "hello, i have a query again",
                   userId: userId,
-                  adminId: websiteId
-                })
+                  adminId: websiteId,
+                }),
               }
             );
 
             const createResult = await createResponse.json();
             console.log("Create Result:", createResult);
 
-            // CALL LIST AGAIN
             const newListResponse = await fetch(
               `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
             );
@@ -326,22 +395,27 @@ function Chatbot() {
 
               setConversationId(conversationId);
               localStorage.setItem("conversationId", conversationId);
+
               setHasHumanChat(true);
               localStorage.setItem("hasHumanChat", "true");
+
               fetchHumanMessages(conversationId);
               setActiveTab("human");
 
               console.log("New Conversation ID:", conversationId);
             }
           } else {
-            // EXISTING CONVERSATION
             const conversationId = listResult.data[0].id;
+
             setConversationId(conversationId);
             localStorage.setItem("conversationId", conversationId);
+
             setHasHumanChat(true);
             localStorage.setItem("hasHumanChat", "true");
+
             fetchHumanMessages(conversationId);
             setActiveTab("human");
+
             console.log("Conversation ID:", conversationId);
           }
         }
@@ -390,10 +464,10 @@ function Chatbot() {
       const result = await response.json();
 
       if (result?.status && result.data.length > 0) {
-        const status =
-          result.data[result.data.length - 1].conversationStatus;
+        const status = result.data[result.data.length - 1].conversationStatus;
 
         console.log("Conversation Status:", status);
+        setConversationStatus(status);
 
         if (status === "closed") {
           setHasHumanChat(false);
@@ -412,33 +486,24 @@ function Chatbot() {
     }
   };
 
-  // 1. Add this Ref at the top with your other hooks
-  const convIdRef = useRef(conversationId);
-
-  // 2. Keep the Ref in sync with the state
   useEffect(() => {
     convIdRef.current = conversationId;
   }, [conversationId]);
 
-  // 3. The Updated Listener
   useEffect(() => {
     const handleIncomingMessage = async (data) => {
-      console.log("🔥 Incoming:", data);
+      console.log("Incoming:", data);
 
       const currentId = convIdRef.current;
-      const incomingConvId =
-        data.conversationId || data.convId || data.id;
+      const incomingConvId = data.conversationId || data.convId || data.id;
 
-      // ✅ PLAY SOUND only when message is from ADMIN
       if (String(data.messageById) !== String(userId)) {
         play();
       }
 
-      // ❗ IMPORTANT: Don't block execution
-      // Just check if it's same conversation before updating UI
       if (currentId && incomingConvId) {
         if (String(incomingConvId) !== String(currentId)) {
-          console.log("⏭️ Different conversation, ignoring UI update");
+          console.log("Different conversation, ignoring UI update");
           return;
         }
       }
@@ -454,12 +519,11 @@ function Chatbot() {
           const messages = result.data || [];
           setHumanMessages(messages);
 
-          // ✅ Check closed status
           if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
 
             if (lastMsg.conversationStatus === "closed") {
-              console.log("❌ Conversation Closed");
+              console.log("Conversation Closed");
 
               setHasHumanChat(false);
               setActiveTab("ai");
@@ -481,37 +545,34 @@ function Chatbot() {
     return () => {
       socket.off("receive_message", handleIncomingMessage);
     };
-  }, []);
+  }, [userId, play]);
 
   useEffect(() => {
     if (!conversationId) return;
 
-    checkConversationStatus(conversationId); // ✅ only once when ID changes
+    checkConversationStatus(conversationId);
   }, [conversationId]);
 
   useEffect(() => {
     const handleConnect = async () => {
-      console.log("✅ User Connected:", socket.id);
+      console.log("User Connected:", socket.id);
 
       const savedEmail = localStorage.getItem("userEmail");
 
       if (savedEmail) {
-        await fetch(
-          "https://chatbotapi.scrollosoft.com/users/user-auth",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              username: savedEmail,
-              password: savedEmail,
-              socketId: socket.id,
-            }),
-          }
-        );
+        await fetch("https://chatbotapi.scrollosoft.com/users/user-auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: savedEmail,
+            password: savedEmail,
+            socketId: socket.id,
+          }),
+        });
 
-        console.log("✅ User re-auth done");
+        console.log("User re-auth done");
       }
     };
 
@@ -525,6 +586,7 @@ function Chatbot() {
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+
       if (activeTab === "ai") {
         sendMessage();
       } else {
@@ -539,7 +601,7 @@ function Chatbot() {
     if (container) {
       container.scrollIntoView({ behavior: "smooth" });
     }
-  }, [humanMessages.length]); // 👈 only when new msg count changes
+  }, [humanMessages.length]);
 
   useEffect(() => {
     if (activeTab === "human" && conversationId) {
@@ -553,7 +615,10 @@ function Chatbot() {
 
     const userMessage = input;
 
-    // Optimistic UI: Append the new message immediately
+    const shouldSendAdminEmail =
+      conversationStatus === "pending" &&
+      !localStorage.getItem(`adminEmailSent_${conversationId}`);
+
     const tempMessage = {
       text: userMessage,
       messageById: userId,
@@ -569,59 +634,36 @@ function Chatbot() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             message: userMessage,
             messageById: userId,
-            conversationId: conversationId
-          })
+            conversationId: conversationId,
+          }),
         }
       );
 
       const result = await response.json();
       console.log("Send Message Result:", result);
 
-
+      if (shouldSendAdminEmail && adminEmail) {
+        await sendEmailToAdmin(userMessage);
+        localStorage.setItem(`adminEmailSent_${conversationId}`, "true");
+      }
     } catch (error) {
       console.error("Send message error:", error);
     }
   };
 
-  useEffect(() => {
-    const handleConnect = async () => {
-      console.log("👤 User Connected:", socket.id);
 
-      const userEmail = localStorage.getItem("userEmail");
 
-      if (userEmail) {
-        await fetch("https://chatbotapi.scrollosoft.com/users/user-auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: userEmail,
-            password: userEmail,
-            socketId: socket.id,
-          }),
-        });
-
-        console.log("✅ User socket mapped");
-      }
-    };
-
-    socket.on("connect", handleConnect);
-
-    return () => {
-      socket.off("connect", handleConnect);
-    };
-  }, []);
 
   const clearChatHistory = () => {
     localStorage.removeItem("chatHistory");
 
-    // Reset UI messages to default
     setMessages([
-      { sender: "bot", text: "Hello! How can I help you with today?" }
+      { sender: "bot", text: "Hello! How can I help you with today?" },
     ]);
   };
 
@@ -634,11 +676,12 @@ function Chatbot() {
       savedChats.forEach((chat) => {
         formattedMessages.push({
           sender: "user",
-          text: chat.question
+          text: chat.question,
         });
+
         formattedMessages.push({
           sender: "bot",
-          text: chat.data
+          text: chat.data,
         });
       });
 
@@ -658,8 +701,9 @@ function Chatbot() {
 
     if (diffMinutes < 2) return "Now";
 
-    if (diffMinutes >= 2 && diffMinutes <= 5)
+    if (diffMinutes >= 2 && diffMinutes <= 5) {
       return `${diffMinutes} min ago`;
+    }
 
     if (diffHours < 24) {
       return msgTime.toLocaleTimeString([], {
@@ -681,14 +725,12 @@ function Chatbot() {
         <div className="headerLeft">
           <span>AI Support</span>
         </div>
-        {
-          activeTab === "ai" && (
-            <button className="clearChatBtn" onClick={clearChatHistory}>
-              Clear Chat
-            </button>
-          )
-        }
 
+        {activeTab === "ai" && (
+          <button className="clearChatBtn" onClick={clearChatHistory}>
+            Clear Chat
+          </button>
+        )}
       </div>
 
       {hasHumanChat && (
@@ -699,6 +741,7 @@ function Chatbot() {
           >
             AI Chat
           </button>
+
           <button
             className={`humanTab ${activeTab === "human" ? "activeTab" : ""}`}
             onClick={() => setActiveTab("human")}
@@ -710,12 +753,10 @@ function Chatbot() {
 
       {!isActive ? (
         <div className="inactive-banner">
-          🚫 Chatbot is currently inactive. Please contact the admin.
+          Chatbot is currently inactive. Please contact the admin.
         </div>
       ) : (
-
         <div className="chatMessages">
-          {/* AI CHAT */}
           {activeTab === "ai" && (
             <>
               {messages.map((msg, index) => (
@@ -725,7 +766,11 @@ function Chatbot() {
                       <BotIcon isTyping={false} />
                     </div>
                   )}
-                  <div className={`messageBubble ${msg.sender === "bot" ? "" : "py"}`}>
+
+                  <div
+                    className={`messageBubble ${msg.sender === "bot" ? "" : "py"
+                      }`}
+                  >
                     {msg.sender === "bot" ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.text}
@@ -736,12 +781,11 @@ function Chatbot() {
                   </div>
                 </div>
               ))}
+
               <div ref={aiMessagesEndRef} />
             </>
           )}
 
-
-          {/* HUMAN CHAT */}
           {activeTab === "human" && (
             <div className="humanChatContainer">
               {isHumanLoading ? (
@@ -751,46 +795,53 @@ function Chatbot() {
               ) : (
                 <>
                   {humanMessages.map((msg, index) => (
-                    <div key={index} className={`messageRow ${msg.messageById == userId ? "user" : "bot"}`}>
+                    <div
+                      key={index}
+                      className={`messageRow ${msg.messageById == userId ? "user" : "bot"
+                        }`}
+                    >
                       {msg.messageById == websiteId && (
                         <div className="botIcon">
-                          {/* <BotIcon isTyping={false} /> */}
                           <User size={18} />
                         </div>
                       )}
-                      <div className={`messageBubble `}>
+
+                      <div className="messageBubble">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.text}
                         </ReactMarkdown>
+
                         <div className="msg-time">
                           {formatMessageTime(msg.createdAt)}
                         </div>
-                      </div> 
+                      </div>
                     </div>
                   ))}
+
                   <div ref={humanMessagesEndRef} />
                 </>
               )}
             </div>
-
           )}
-
-
 
           {isLoading && activeTab === "ai" && (
             <div className="messageRow bot">
               <div className="botIcon">
                 <BotIcon isTyping={true} />
               </div>
+
               <div className="messageBubble typing-container">
                 <div className="typing-dots">
-                  Thinking <span>.</span><span>.</span><span>.</span>
+                  Thinking <span>.</span>
+                  <span>.</span>
+                  <span>.</span>
                 </div>
               </div>
             </div>
           )}
         </div>
       )}
+
       {isActive ? (
         <div className="chatInputArea">
           <textarea
@@ -804,17 +855,25 @@ function Chatbot() {
             className="auto-expand-input"
           />
 
-          <button onClick={activeTab === "ai" ? sendMessage : sendHumanMessage} disabled={!isActive || isLoading || !activeUrl}>
+          <button
+            onClick={activeTab === "ai" ? sendMessage : sendHumanMessage}
+            disabled={!isActive || isLoading || !activeUrl}
+          >
             <Send size={18} />
           </button>
         </div>
       ) : null}
-      {/* HUMAN CONNECT DRAWER */}
+
       {showHumanDrawer && (
         <div className="humanDrawerOverlay">
           <div className="humanDrawer">
-            <h3>Connect With Human</h3>
-            <p>Please enter your email and our team will contact you.</p>
+            <h3>{emailOnlyMode ? "Enter Your Email" : "Connect With Human"}</h3>
+
+            <p>
+              {emailOnlyMode
+                ? "Please enter your email to continue."
+                : "Please enter your email and our team will contact you."}
+            </p>
 
             <input
               type="email"
@@ -822,17 +881,24 @@ function Chatbot() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+
             <div className="drawerButtons">
-              <button className="drawerSubmit" onClick={submitHumanRequest} disabled={isSubmitting}>
+              <button
+                className="drawerSubmit"
+                onClick={() => submitHumanRequest()}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>
 
-              <button
-                className="drawerClose"
-                onClick={() => setShowHumanDrawer(false)}
-              >
-                Close
-              </button>
+              {!emailOnlyMode && (
+                <button
+                  className="drawerClose"
+                  onClick={() => setShowHumanDrawer(false)}
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>

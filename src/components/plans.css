@@ -280,6 +280,7 @@
 .landing-section-title {
     text-align: center;
     font-family: var(--landing-font-display);
+    color: #FFFFFF;
     font-size: 40px;
     font-weight: 700;
     letter-spacing: -1px;

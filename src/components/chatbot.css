@@ -429,10 +429,15 @@ p {
     margin-top: 10px;
     margin-bottom: 10px;
     border: 1px solid #E7E7E7;
+    color: #000;
     border-radius: 12px;
     background-color: #FAFAFA;
     height: 44px;
     font-family: "Poppins", sans-serif;
+}
+
+.user .msg-time{
+    color: #FFFFFF !important;
 }
 
 .humanDrawer button {
@@ -475,6 +480,7 @@ p {
     padding: 7px;
     border: none;
     background: #ddd;
+    color: #000;
     cursor: pointer;
     font-size: 14px;
 
