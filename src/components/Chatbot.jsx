@@ -88,6 +88,9 @@ function Chatbot() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    // const id = params.get("websiteId");
+
     const id = "97";
 
     console.log("Website ID:", id);
@@ -97,6 +100,7 @@ function Chatbot() {
       fetchUserDetails(id);
     }
   }, []);
+
 
   const fetchUserDetails = async (id) => {
     try {
@@ -290,13 +294,40 @@ function Chatbot() {
     }
   };
 
+  const createLead = async (leadEmail) => {
+    if (!leadEmail) return;
+
+    try {
+      const response = await fetch(
+        "https://chatbotapi.scrollosoft.com/users/create-lead",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // adminId: Number(websiteId),
+            adminId: Number(websiteId),
+            email: leadEmail,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      console.log("Create Lead Result:", result);
+    } catch (error) {
+      console.error("Create lead failed:", error);
+    }
+  };
+
+
   const submitHumanRequest = async (emailOverride) => {
     const finalEmail = emailOverride || email;
 
     if (!finalEmail) return;
 
     localStorage.setItem("userEmail", finalEmail);
-
+    await createLead(finalEmail);
     // First visit popup only stores email.
     // It should not create/open human chat yet.
     if (emailOnlyMode && !emailOverride) {

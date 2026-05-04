@@ -16,6 +16,7 @@ import Invoice from './components/Invoice';
 import Integration from './components/Integration';
 import ChangePassword from './components/ChangePassword';
 import Themes from './components/Themes';
+import Leads from './components/Leads';
 
 function App() {
   const [auth, setAuth] = useState({ isLoggedIn: false, role: '' });
@@ -51,6 +52,7 @@ function App() {
           <Route path="/my-account" element={<OwnerAccount />} />
           <Route path="/themes" element={<Themes />} />
           <Route path="/integration" element={<Integration />} />
+          <Route path="/leads" element={<Leads />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/" element={<Plans />} />
         </Routes>

@@ -156,6 +156,7 @@
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 6px;
+    color: #000;
 }
 
 .trial-card p {
@@ -178,6 +179,7 @@
     margin-bottom: 16px;
     margin-top: 0;
     text-align: left;
+    color: #000;
 }
 
 /* Admin Info */

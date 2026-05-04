@@ -1,4 +1,4 @@
-import { CodeXml, LayoutGrid, LogOut, MessageCircle, Palette, ReceiptText, UserRound } from "lucide-react";
+import { CodeXml, LayoutGrid, LocateFixed, LogOut, MessageCircle, Palette, ReceiptText, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -44,6 +44,7 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                   <LayoutGrid />  Dashboard
                 </a>
               </li>
+
 
 
               {/* ✅ Human Chat */}
@@ -105,6 +106,20 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                   <CodeXml /> Integration
                 </a>
               </li>
+
+              <li>
+                <a
+                  className={
+                    location.pathname === "/leads" || location.pathname === "/"
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() => navigate("/leads")}
+                >
+                  <LocateFixed />  Leads
+                </a>
+              </li>
+
             </>
           )}
         </ul>
