@@ -387,6 +387,10 @@
   text-align: center;
 }
 
+.logout-modal p {
+    color: #000;
+}
+
 /* Buttons */
 .modal-actions {
   display: flex;

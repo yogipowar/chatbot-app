@@ -19,10 +19,47 @@ const saveChatToLocal = (question, data) => {
     };
 
     const updated = [...existing, newEntry].slice(-50);
-
     localStorage.setItem("chatHistory", JSON.stringify(updated));
   } catch (err) {
     console.error("LocalStorage Error:", err);
+  }
+};
+
+const saveChatAgainstUserId = (userId, userEmail, conversationId = null) => {
+  try {
+    const chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+    const storageKey = `chatHistory_${userId}`;
+
+    if (chatHistory.length === 0) return;
+
+    const existingUserChats =
+      JSON.parse(localStorage.getItem(storageKey)) || {
+        userId,
+        email: userEmail,
+        chatSessions: [],
+      };
+
+    const newSession = {
+      conversationId,
+      chats: chatHistory.map((chat) => ({
+        question: chat.question,
+        aiResponse: chat.data,
+        timestamp: chat.timestamp,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedUserChats = {
+      ...existingUserChats,
+      userId,
+      email: userEmail,
+      chatSessions: [...(existingUserChats.chatSessions || []), newSession],
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(updatedUserChats));
+  } catch (err) {
+    console.error("User chat localStorage error:", err);
   }
 };
 
@@ -47,10 +84,9 @@ function Chatbot() {
   const [userId, setUserId] = useState(null);
   const [isActive, setIsActive] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
-  const firstHumanEmailSentRef = useRef(false);
-  // NEW: email popup mode for first visit only
   const [emailOnlyMode, setEmailOnlyMode] = useState(false);
   const [conversationStatus, setConversationStatus] = useState(null);
+
   const textareaRef = useRef(null);
   const aiMessagesEndRef = useRef(null);
   const humanMessagesEndRef = useRef(null);
@@ -64,8 +100,6 @@ function Chatbot() {
     const savedConversationId = localStorage.getItem("conversationId");
     const savedEmail = localStorage.getItem("userEmail");
 
-    // NEW FLOW:
-    // First visit / refresh: if email is not stored, open popup.
     if (!savedEmail) {
       setEmailOnlyMode(true);
       setShowHumanDrawer(true);
@@ -91,7 +125,7 @@ function Chatbot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
 
-    // const id = "97";
+    // const id = "97"
 
     console.log("Website ID:", id);
 
@@ -100,7 +134,6 @@ function Chatbot() {
       fetchUserDetails(id);
     }
   }, []);
-
 
   const fetchUserDetails = async (id) => {
     try {
@@ -118,8 +151,6 @@ function Chatbot() {
       const result = await response.json();
 
       if (result.status && result.user) {
-        console.log("Admin/User Details:", result.user);
-
         const adminMail =
           result.user.email ||
           result.user.username ||
@@ -128,34 +159,25 @@ function Chatbot() {
           "";
 
         setAdminEmail(adminMail);
-        console.log("Admin email:", adminMail);
 
         const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
         setActiveUrl(urlToUse);
 
-        const activeStatus = Number(result.user.isActive) === 1;
-        setIsActive(activeStatus);
+        setIsActive(Number(result.user.isActive) === 1);
 
         const primary = result.user.primaryColor || "#009DE1";
         const secondary = result.user.secondaryColor || "#0488c1";
 
         document.documentElement.style.setProperty("--primary-color", primary);
         document.documentElement.style.setProperty("--secondary-color", secondary);
-      }
 
+        const position = result.user.chatPosition || "right";
+        const chatbot = document.querySelector(".chatbotContainer");
 
-
-      const position = result.user.chatPosition || "right";
-      const chatbot = document.querySelector(".chatbotContainer");
-
-      if (chatbot) {
-        chatbot.style.left = position === "left" ? "0px" : "auto";
-        chatbot.style.right = position === "right" ? "0px" : "auto";
-      }
-
-      if (result.status && result.user) {
-        const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
-        setActiveUrl(urlToUse);
+        if (chatbot) {
+          chatbot.style.left = position === "left" ? "0px" : "auto";
+          chatbot.style.right = position === "right" ? "0px" : "auto";
+        }
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -190,13 +212,10 @@ function Chatbot() {
     }
   };
 
-
-
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height =
-        textareaRef.current.scrollHeight + "px";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, [input]);
 
@@ -207,6 +226,26 @@ function Chatbot() {
       humanMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, humanMessages, activeTab]);
+
+  const handleConnectToHuman = async () => {
+    if (hasHumanChat && conversationId) {
+      setHasHumanChat(true);
+      setActiveTab("human");
+      fetchHumanMessages(conversationId);
+      return;
+    }
+
+    const savedEmail = localStorage.getItem("userEmail");
+
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setEmailOnlyMode(false);
+      await submitHumanRequest(savedEmail);
+    } else {
+      setEmailOnlyMode(false);
+      setShowHumanDrawer(true);
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -237,19 +276,16 @@ function Chatbot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://chatbotapi.scrollosoft.com/api/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            question: userQuestion,
-            url: activeUrl,
-          }),
-        }
-      );
+      const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: userQuestion,
+          url: activeUrl,
+        }),
+      });
 
       const data = await response.json();
       const botResponse = data?.data || "No response received";
@@ -264,22 +300,10 @@ function Chatbot() {
         },
       ]);
 
-      if (botResponse === "CONNECTING TO HUMAN") {
-        if (hasHumanChat && conversationId) {
-          setActiveTab("human");
-          fetchHumanMessages(conversationId);
-        } else {
-          const savedEmail = localStorage.getItem("userEmail");
+      const normalizedBotResponse = String(botResponse).trim().toUpperCase();
 
-          if (savedEmail) {
-            setEmail(savedEmail);
-            setEmailOnlyMode(false);
-            submitHumanRequest(savedEmail);
-          } else {
-            setEmailOnlyMode(false);
-            setShowHumanDrawer(true);
-          }
-        }
+      if (normalizedBotResponse === "CONNECTING TO HUMAN") {
+        await handleConnectToHuman();
       }
     } catch (e) {
       setMessages((prev) => [
@@ -306,7 +330,6 @@ function Chatbot() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            // adminId: Number(websiteId),
             adminId: Number(websiteId),
             email: leadEmail,
           }),
@@ -320,7 +343,6 @@ function Chatbot() {
     }
   };
 
-
   const submitHumanRequest = async (emailOverride) => {
     const finalEmail = emailOverride || email;
 
@@ -328,8 +350,7 @@ function Chatbot() {
 
     localStorage.setItem("userEmail", finalEmail);
     await createLead(finalEmail);
-    // First visit popup only stores email.
-    // It should not create/open human chat yet.
+
     if (emailOnlyMode && !emailOverride) {
       setShowHumanDrawer(false);
       setEmailOnlyMode(false);
@@ -340,21 +361,14 @@ function Chatbot() {
 
     try {
       if (!socket.id) {
-        console.log("Socket ID null, waiting for connection...");
-
         await new Promise((resolve) => {
-          socket.once("connect", () => {
-            resolve();
-          });
+          socket.once("connect", resolve);
 
           if (socket.connected) resolve();
 
           setTimeout(resolve, 3000);
         });
       }
-
-      const currentSocketId = socket.id;
-      console.log("Using Socket ID:", currentSocketId);
 
       const authResponse = await fetch(
         "https://chatbotapi.scrollosoft.com/users/user-auth",
@@ -375,16 +389,15 @@ function Chatbot() {
       console.log("Auth Result:", authResult);
 
       if (authResult?.status && authResult?.user?.id) {
-        const userId = authResult.user.id;
+        const loggedInUserId = authResult.user.id;
 
-        setUserId(userId);
-        localStorage.setItem("userId", userId);
+        setUserId(loggedInUserId);
+        localStorage.setItem("userId", loggedInUserId);
         localStorage.setItem("userEmail", finalEmail);
-
         setShowHumanDrawer(false);
 
         const listResponse = await fetch(
-          `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
+          `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${loggedInUserId}`
         );
 
         const listResult = await listResponse.json();
@@ -393,10 +406,26 @@ function Chatbot() {
         if (listResult?.status) {
           const hasChat = listResult.data.length > 0;
 
-          setHasHumanChat(hasChat);
-          localStorage.setItem("hasHumanChat", hasChat.toString());
+          if (hasChat) {
+            const existingConversationId = listResult.data[0].id;
 
-          if (!hasChat) {
+            setConversationId(existingConversationId);
+            localStorage.setItem("conversationId", existingConversationId);
+
+            setHasHumanChat(true);
+            localStorage.setItem("hasHumanChat", "true");
+
+            saveChatAgainstUserId(
+              loggedInUserId,
+              finalEmail,
+              existingConversationId
+            );
+
+            await fetchHumanMessages(existingConversationId);
+            setActiveTab("human");
+
+            console.log("Existing Conversation ID:", existingConversationId);
+          } else {
             const createResponse = await fetch(
               "https://chatbotapi.scrollosoft.com/conversation/create",
               {
@@ -405,7 +434,7 @@ function Chatbot() {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  userId: userId,
+                  userId: loggedInUserId,
                   adminId: websiteId,
                 }),
               }
@@ -415,39 +444,32 @@ function Chatbot() {
             console.log("Create Result:", createResult);
 
             const newListResponse = await fetch(
-              `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${userId}`
+              `https://chatbotapi.scrollosoft.com/conversation/list?adminId=${websiteId}&userId=${loggedInUserId}`
             );
 
             const newListResult = await newListResponse.json();
             console.log("Updated List Result:", newListResult);
 
             if (newListResult?.status && newListResult.data.length > 0) {
-              const conversationId = newListResult.data[0].id;
+              const newConversationId = newListResult.data[0].id;
 
-              setConversationId(conversationId);
-              localStorage.setItem("conversationId", conversationId);
+              setConversationId(newConversationId);
+              localStorage.setItem("conversationId", newConversationId);
 
               setHasHumanChat(true);
               localStorage.setItem("hasHumanChat", "true");
 
-              fetchHumanMessages(conversationId);
+              saveChatAgainstUserId(
+                loggedInUserId,
+                finalEmail,
+                newConversationId
+              );
+
+              await fetchHumanMessages(newConversationId);
               setActiveTab("human");
 
-              console.log("New Conversation ID:", conversationId);
+              console.log("New Conversation ID:", newConversationId);
             }
-          } else {
-            const conversationId = listResult.data[0].id;
-
-            setConversationId(conversationId);
-            localStorage.setItem("conversationId", conversationId);
-
-            setHasHumanChat(true);
-            localStorage.setItem("hasHumanChat", "true");
-
-            fetchHumanMessages(conversationId);
-            setActiveTab("human");
-
-            console.log("Conversation ID:", conversationId);
           }
         }
       } else {
@@ -455,9 +477,9 @@ function Chatbot() {
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const fetchHumanMessages = async (convId) => {
@@ -471,17 +493,22 @@ function Chatbot() {
       );
 
       const result = await response.json();
-
       console.log("Human Messages:", result);
 
       if (result?.status) {
         setHumanMessages(result.data || []);
+
+        if (result.data?.length > 0) {
+          setConversationStatus(
+            result.data[result.data.length - 1].conversationStatus
+          );
+        }
       }
     } catch (error) {
       console.error("Error fetching human messages:", error);
+    } finally {
+      setIsHumanLoading(false);
     }
-
-    setIsHumanLoading(false);
   };
 
   const checkConversationStatus = async (convId) => {
@@ -497,7 +524,6 @@ function Chatbot() {
       if (result?.status && result.data.length > 0) {
         const status = result.data[result.data.length - 1].conversationStatus;
 
-        console.log("Conversation Status:", status);
         setConversationStatus(status);
 
         if (status === "closed") {
@@ -534,7 +560,6 @@ function Chatbot() {
 
       if (currentId && incomingConvId) {
         if (String(incomingConvId) !== String(currentId)) {
-          console.log("Different conversation, ignoring UI update");
           return;
         }
       }
@@ -552,10 +577,9 @@ function Chatbot() {
 
           if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
+            setConversationStatus(lastMsg.conversationStatus);
 
             if (lastMsg.conversationStatus === "closed") {
-              console.log("Conversation Closed");
-
               setHasHumanChat(false);
               setActiveTab("ai");
               setConversationId(null);
@@ -627,11 +651,7 @@ function Chatbot() {
   };
 
   useEffect(() => {
-    const container = humanMessagesEndRef.current;
-
-    if (container) {
-      container.scrollIntoView({ behavior: "smooth" });
-    }
+    humanMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [humanMessages.length]);
 
   useEffect(() => {
@@ -670,7 +690,7 @@ function Chatbot() {
           body: JSON.stringify({
             message: userMessage,
             messageById: userId,
-            conversationId: conversationId,
+            conversationId,
           }),
         }
       );
@@ -686,9 +706,6 @@ function Chatbot() {
       console.error("Send message error:", error);
     }
   };
-
-
-
 
   const clearChatHistory = () => {
     localStorage.removeItem("chatHistory");
@@ -828,10 +845,12 @@ function Chatbot() {
                   {humanMessages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`messageRow ${msg.messageById == userId ? "user" : "bot"
+                      className={`messageRow ${String(msg.messageById) === String(userId)
+                          ? "user"
+                          : "bot"
                         }`}
                     >
-                      {msg.messageById == websiteId && (
+                      {String(msg.messageById) === String(websiteId) && (
                         <div className="botIcon">
                           <User size={18} />
                         </div>
@@ -842,9 +861,12 @@ function Chatbot() {
                           {msg.text}
                         </ReactMarkdown>
 
-                        <div className="msg-time">
-                          {formatMessageTime(msg.createdAt)}
-                        </div>
+                        {msg.text?.trim().length > 0 && (
+                          <div className="msg-time">
+                            {formatMessageTime(msg.createdAt)}
+                          </div>
+                        )}
+
                       </div>
                     </div>
                   ))}

@@ -11,6 +11,10 @@
     z-index: 9999;
 }
 
+.plan-card-heading {
+    color: #FFFFFF;
+}
+
 /* Modal */
 .subscription-modal {
     background: #0b0f1a;

@@ -144,7 +144,7 @@ const SubscriptionModal = ({ onClose }) => {
                     <div className="plan-card popular">
                         <div className="popular-tag">Most Popular</div>
 
-                        <h2>Elite Plan</h2>
+                        <h2 className="plan-card-heading">Elite Plan</h2>
                         <p className="desc">
                             Perfect for growing businesses that want powerful AI support.
                         </p>
@@ -170,7 +170,7 @@ const SubscriptionModal = ({ onClose }) => {
 
                     {/* Custom Plan */}
                     <div className="plan-card">
-                        <h2>Custom Plan</h2>
+                        <h2 className="plan-card-heading">Custom Plan</h2>
                         <p className="desc">
                             Tailored solutions for enterprise needs.
                         </p>
