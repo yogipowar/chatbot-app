@@ -71,48 +71,57 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="cp-container">
-      <div className="cp-card">
-        <h2>Reset Password</h2>
-        <p className="cp-subtext">{email}</p>
+    <>
+      <div className="cp-container">
+        <img className="logo-img" src="./logo-sec.png" alt="" />
+        <div className="cp-card">
+          <h2>Reset Password</h2>
+          <p className="cp-subtext">{email}</p>
 
-        {/* Password */}
-        <div className="cp-input-group">
-          <input
-            type={showPass ? "text" : "password"}
-            placeholder="New Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <span onClick={() => setShowPass(!showPass)}>
-            {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-          </span>
+          {/* Password */}
+          <div className="cp-input-group">
+            <label>New Password</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPass ? "text" : "password"}
+                placeholder="New Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <span onClick={() => setShowPass(!showPass)}>
+                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </span>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="cp-input-group">
+            <label>Confirm Password</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showConfirmPass ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <span onClick={() => setShowConfirmPass(!showConfirmPass)}>
+                {showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </span>
+            </div>
+          </div>
+
+          {message && (
+            <p className={`cp-message ${isSuccess ? "success" : "error"}`}>
+              {message}
+            </p>
+          )}
+
+          <button onClick={handleChangePassword} disabled={loading}>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
         </div>
-
-        {/* Confirm Password */}
-        <div className="cp-input-group">
-          <input
-            type={showConfirmPass ? "text" : "password"}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-          <span onClick={() => setShowConfirmPass(!showConfirmPass)}>
-            {showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
-          </span>
-        </div>
-
-        {message && (
-          <p className={`cp-message ${isSuccess ? "success" : "error"}`}>
-            {message}
-          </p>
-        )}
-
-        <button onClick={handleChangePassword} disabled={loading}>
-          {loading ? "Updating..." : "Update Password"}
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

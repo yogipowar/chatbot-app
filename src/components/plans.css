@@ -17,7 +17,8 @@
     --landing-cyan-glow: rgba(0, 206, 201, 0.2);
     --landing-gradient: linear-gradient(135deg, #6c5ce7, #00cec9);
     --landing-font-display: 'Space Grotesk', sans-serif;
-    --landing-font-body: 'Inter', sans-serif;
+    /* --landing-font-body: 'Inter', sans-serif; */
+    --landing-font-body: 'Poppins', sans-serif;
 }
 
 /* ===== Landing Page Container ===== */
@@ -93,6 +94,11 @@
     letter-spacing: -0.5px;
 }
 
+.logo-img{
+    width: 160px;
+    height: 24px;
+}
+
 .landing-nav-links {
     display: flex;
     gap: 32px;
@@ -119,7 +125,8 @@
     border: none;
     border-radius: 8px;
     color: #fff;
-    font-family: var(--landing-font-body);
+    /* font-family: var(--landing-font-body); */
+    font-family: "Poppins", sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -134,8 +141,8 @@
 /* ===== Hero Section ===== */
 .landing-hero {
     text-align: center;
-    padding: 100px 24px 80px;
-    max-width: 860px;
+    padding: 140px 24px 80px;
+    max-width: 1030px;
     margin: 0 auto;
     position: relative;
 }
@@ -210,7 +217,7 @@
     font-size: 18px;
     line-height: 1.7;
     color: var(--landing-text-muted);
-    max-width: 580px;
+    max-width: 600px;
     margin: 0 auto 40px;
     position: relative;
     z-index: 1;
@@ -482,6 +489,8 @@
     text-align: center;
     font-size: 13px;
     color: var(--landing-text-muted);
+        display: flex;
+    justify-content: space-between;
 }
 
 .billing-toggle {

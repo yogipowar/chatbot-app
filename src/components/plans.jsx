@@ -203,7 +203,7 @@ const Plans = () => {
     const features = [
         { icon: '⚡', title: 'Instant Setup', desc: 'Deploy an AI chatbot on your business website in under 5 minutes. No coding required.' },
         { icon: '🧠', title: 'Smart Conversations', desc: 'Powered by advanced AI that understands context, handles FAQs, and qualifies leads automatically.' },
-        { icon: '🔗', title: 'Seamless Integration', desc: 'Works with any website platform — WordPress, Shopify, Webflow, or custom-built sites.' },
+        { icon: '🔗', title: 'Seamless Integration', desc: 'Works with any website platform - WordPress, Shopify, Webflow, or custom-built sites.' },
         { icon: '📊', title: 'Analytics Dashboard', desc: 'Track conversations, conversion rates, and customer satisfaction in real-time.' },
         { icon: '🌐', title: 'Multilingual Support', desc: 'Engage visitors in 50+ languages. Break barriers and serve a global audience.' },
         { icon: '🔒', title: 'Enterprise Security', desc: 'SOC 2 compliant with end-to-end encryption. Your customer data stays safe.' },
@@ -235,7 +235,9 @@ const Plans = () => {
         <div className="landing-page">
             {/* Sticky Nav */}
             <nav className={`landing-nav ${isScrolled ? 'scrolled' : ''}`}>
-                <div className="landing-logo">LOGO</div>
+                <div className="landing-logo">
+                    <img className='logo-img' src="/logo.png" alt="" />
+                </div>
                 <ul className="landing-nav-links">
                     <li><a href="#features">Features</a></li>
                     <li><a href="#pricing">Pricing</a></li>
@@ -260,7 +262,7 @@ const Plans = () => {
 
             {/* Features Section */}
             <section className="landing-features" id="features">
-                <div className="landing-section-label">Why BotForge AI</div>
+                <div className="landing-section-label">Why WC Chatbot AI</div>
                 <h2 className="landing-section-title">Everything Your Business Needs</h2>
                 <div className="landing-features-grid">
                     {features.map((f) => (
@@ -342,7 +344,12 @@ const Plans = () => {
             )}
 
             <footer className="landing-footer">
-                © 2026 BotForge AI. All rights reserved.
+                <p>
+                    © 2026 WC chatbot. All rights reserved.
+                </p>
+                <p>
+                    Developed and Designed By Web Create Hub
+                </p>
             </footer>
         </div>
     );

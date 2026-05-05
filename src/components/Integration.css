@@ -11,10 +11,11 @@
     position: relative;
     background: rgb(0 0 0);
     padding: 16px;
-    border-radius: 8px;
+    border-radius: 12px;
     font-family: monospace;
     white-space: pre-wrap;
     color: white;
+    margin-top: 20px;
 }
 
 h2{

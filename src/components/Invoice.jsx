@@ -91,7 +91,7 @@ const Invoice = () => {
                 {loading ? (
                     <p>Loading invoices...</p>
                 ) : invoices.length === 0 ? (
-                    <p>No invoices found</p>
+                    <p className="no-invoice-found-text">No invoices found</p>
                 ) : (
                     <div className="invoice-table-wrapper">
                         <table className="invoice-table">

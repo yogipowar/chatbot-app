@@ -83,6 +83,7 @@
   font-size: 48px;
   font-weight: 500;
   margin-bottom: 5px;
+  color: #000;
 }
 
 .subtitle {
@@ -123,6 +124,12 @@
   cursor: pointer;
   font-weight: 600;
   margin-top: 10px;
+}
+
+.cancel-button{
+  background-color: #FFFFFF !important;
+  border: 1px solid #009DE1 !important;
+  color: #009DE1 !important;
 }
 
 .login-btn:hover {
@@ -191,10 +198,18 @@
 
 .forgot-modal input {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
+  padding: 12px 10px;
+  margin: 0;
   border: 1px solid #ddd;
   border-radius: 8px;
+  background-color: #FFFFFF;
+  color: #000;
+  margin-bottom: 20px;
+  font-family: "Poppins", sans-serif;
+}
+
+.logo-img{
+  width: 330px;
 }
 
 .forgot-buttons {

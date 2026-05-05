@@ -158,7 +158,7 @@ const LoginPage = () => {
 
           {/* Top Left Logo */}
           <div className="logo">
-            ⚡ WCH BOT
+            <img className="logo-img" src="/logo.png" alt="" />
           </div>
 
 
@@ -267,6 +267,7 @@ const LoginPage = () => {
                   setShowForgotModal(false);
                   resetForgotForm();
                 }}
+                className="cancel-button"
               >
                 Cancel
               </button>

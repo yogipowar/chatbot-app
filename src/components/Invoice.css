@@ -19,6 +19,10 @@
   border-collapse: collapse;
 }
 
+.no-invoice-found-text{
+  color: #000;
+}
+
 .invoice-table th,
 .invoice-table td {
   padding: 14px;

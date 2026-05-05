@@ -9,7 +9,7 @@
 .leads-header h1 {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #1f2937;
 }
 
@@ -23,6 +23,7 @@
   outline: none;
   background: #fff;
   color: #000;
+  font-family: "Poppins", sans-serif;
 }
 
 .leads-search:focus {
@@ -49,7 +50,7 @@
   background: #fbfcfd;
   color: #718096;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.4px;
   text-align: left;
 }
