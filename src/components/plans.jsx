@@ -243,7 +243,7 @@ const Plans = () => {
         {
             icon: Search,
             title: "Connect Your Knowledge",
-            desc: "Add your sitemap, website pages, PDFs, FAQs, docs, policies, or service information.",
+            desc: "Add your sitemap or PDFs.",
         },
         {
             icon: MessageSquareText,
