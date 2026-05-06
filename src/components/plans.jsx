@@ -205,6 +205,7 @@ const Plans = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const elitePrice = billingCycle === "monthly" ? 25 : 20;
     const elitePeriod = billingCycle === "monthly" ? "/month" : "/mo (billed annually)";
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {
