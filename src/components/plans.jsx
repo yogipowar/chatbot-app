@@ -79,6 +79,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
             const data = await res.json();
             if (data.status || data.success) {
                 onSuccess();
+                navigate("/login");
             } else {
                 setError(data.message || "Registration failed");
             }
@@ -332,7 +333,12 @@ const Plans = () => {
                     <li><a href="#pricing">Pricing</a></li>
                     {/* <li><a href="#faq">FAQ</a></li> */}
                 </ul>
-                <button className="landing-nav-cta" onClick={() => setIsModalOpen(true)}>Get Started</button>
+                <div className="landing-nav-actions">
+                    <button className="landing-login-btn" onClick={() => navigate("/login")}>
+                        Login
+                    </button>
+                    <button className="landing-nav-cta" onClick={() => setIsModalOpen(true)}>Get Started</button>
+                </div>
             </nav>
 
             <section className="landing-hero">

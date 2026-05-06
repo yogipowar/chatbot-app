@@ -963,6 +963,24 @@ section[id] {
     border-radius: 20px;
 }
 
+
+.landing-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.landing-login-btn {
+    border: 1px solid #d7dde8;
+    background: #fff;
+    color: #111827;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
 .landing-final-cta h2 {
     max-width: 720px;
     margin: 0 0 14px;

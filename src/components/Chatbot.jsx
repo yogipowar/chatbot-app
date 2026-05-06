@@ -596,14 +596,18 @@ function Chatbot() {
       const currentId = convIdRef.current;
       const incomingConvId = data.conversationId || data.convId || data.id;
 
-      if (String(data.messageById) !== String(userId)) {
-        play();
-      }
-
       if (currentId && incomingConvId) {
         if (String(incomingConvId) !== String(currentId)) {
           return;
         }
+      }
+
+      const isFromCurrentUser = String(data.messageById) === String(userId);
+      const isAiMessage = isAiHistoryMessage(data);
+
+      if (isFromCurrentUser && isAiMessage) {
+        // alert(isFromCurrentUser , isAiMessage)
+        play();
       }
 
       try {
