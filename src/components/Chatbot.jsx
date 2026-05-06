@@ -94,6 +94,20 @@ function Chatbot() {
 
   const { play } = useSound(notification);
 
+  const isAiHistoryMessage = (msg) => {
+    const text = String(msg.text || msg.message || msg.messageText || "").trim();
+
+    return (
+      String(msg.messageById) === "ai_bot" ||
+      String(msg.messageById) === "ai_history_user" ||
+      text.startsWith("[AI_HISTORY_USER]") ||
+      text.startsWith("[AI_HISTORY_BOT]") ||
+      /^Chat\s+\d+\s+User:/i.test(text) ||
+      (text.includes("User:") && text.includes("AI:"))
+    );
+  };
+
+
   useEffect(() => {
     const savedHasHumanChat = localStorage.getItem("hasHumanChat");
     const savedUserId = localStorage.getItem("userId");
@@ -123,9 +137,9 @@ function Chatbot() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    // const id = params.get("websiteId");
 
-    // const id = "97"
+    const id = "97"
 
     console.log("Website ID:", id);
 
@@ -292,6 +306,20 @@ function Chatbot() {
 
       saveChatToLocal(userQuestion, botResponse);
 
+      if (conversationId && userId) {
+        await sendChatMessageToConversation(
+          `[AI_HISTORY_USER] ${userQuestion}`,
+          "ai_history_user",
+          conversationId
+        );
+
+        await sendChatMessageToConversation(
+          `[AI_HISTORY_BOT] ${botResponse}`,
+          "ai_bot",
+          conversationId
+        );
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -421,6 +449,11 @@ function Chatbot() {
               existingConversationId
             );
 
+            await sendStoredAiChatToConversation(
+              existingConversationId,
+              loggedInUserId
+            );
+
             await fetchHumanMessages(existingConversationId);
             setActiveTab("human");
 
@@ -465,6 +498,11 @@ function Chatbot() {
                 newConversationId
               );
 
+              await sendStoredAiChatToConversation(
+                newConversationId,
+                loggedInUserId
+              );
+
               await fetchHumanMessages(newConversationId);
               setActiveTab("human");
 
@@ -496,7 +534,11 @@ function Chatbot() {
       console.log("Human Messages:", result);
 
       if (result?.status) {
-        setHumanMessages(result.data || []);
+        const onlyHumanMessages = (result.data || []).filter(
+          (msg) => !isAiHistoryMessage(msg)
+        );
+
+        setHumanMessages(onlyHumanMessages);
 
         if (result.data?.length > 0) {
           setConversationStatus(
@@ -572,7 +614,10 @@ function Chatbot() {
         const result = await response.json();
 
         if (result?.status) {
-          const messages = result.data || [];
+          const messages = (result.data || []).filter(
+            (msg) => !isAiHistoryMessage(msg)
+          );
+
           setHumanMessages(messages);
 
           if (messages.length > 0) {
@@ -767,6 +812,60 @@ function Chatbot() {
     });
   };
 
+  const sendStoredAiChatToConversation = async (convId, loggedInUserId) => {
+    try {
+      const chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+      if (!convId || !loggedInUserId || chatHistory.length === 0) return;
+
+      const alreadySentKey = `aiChatSent_${convId}`;
+      if (localStorage.getItem(alreadySentKey) === "true") return;
+
+      for (const chat of chatHistory) {
+        if (chat.question) {
+          await sendChatMessageToConversation(
+            `[AI_HISTORY_USER] ${chat.question}`,
+            "ai_history_user",
+            convId
+          );
+        }
+
+        if (chat.data) {
+          await sendChatMessageToConversation(
+            `[AI_HISTORY_BOT] ${chat.data}`,
+            "ai_bot",
+            convId
+          );
+        }
+      }
+
+      localStorage.setItem(alreadySentKey, "true");
+    } catch (error) {
+      console.error("Send stored AI chat error:", error);
+    }
+  };
+
+
+  const sendChatMessageToConversation = async (message, messageById, convId) => {
+    if (!message || !convId || !messageById) return;
+
+    try {
+      await fetch("https://chatbotapi.scrollosoft.com/conversation/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          messageById,
+          conversationId: convId,
+        }),
+      });
+    } catch (error) {
+      console.error("Send chat history message error:", error);
+    }
+  };
+
   return (
     <div className="chatbotContainer">
       <div className="chatHeader">
@@ -846,8 +945,8 @@ function Chatbot() {
                     <div
                       key={index}
                       className={`messageRow ${String(msg.messageById) === String(userId)
-                          ? "user"
-                          : "bot"
+                        ? "user"
+                        : "bot"
                         }`}
                     >
                       {String(msg.messageById) === String(websiteId) && (

@@ -318,6 +318,10 @@
   font-weight: 500;
 }
 
+.chat-bubble p {
+  margin: 0;
+}
+
 .chat-bubble.left {
   background: #F1F1F1;
   color: #000;

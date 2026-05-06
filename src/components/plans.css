@@ -372,6 +372,17 @@ section[id] {
     margin: 0;
 }
 
+
+.human-support-copy p,
+.problem-copy p,
+.integrations-copy p {
+    text-align: left;
+}
+
+.human-support-card .landing-section-label{
+     text-align: left;
+} 
+
 .problem-list {
     display: grid;
     gap: 14px;
@@ -929,11 +940,12 @@ section[id] {
 }
 
 .faq-item p {
-    margin: 0;
     padding: 0 0 22px;
     color: var(--landing-text-muted);
     font-size: 14px;
     line-height: 1.7;
+    max-width: 85%;
+    margin: 0 auto;
 }
 
 /* ===== Final CTA ===== */
@@ -944,6 +956,7 @@ section[id] {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-direction: column;
     gap: 32px;
     background: linear-gradient(135deg, rgba(108, 92, 231, 0.18), rgba(0, 206, 201, 0.1)), var(--landing-surface);
     border: 1px solid var(--landing-border);

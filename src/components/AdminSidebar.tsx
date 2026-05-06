@@ -12,7 +12,9 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <>
       <aside className="admin-sidebar">
-        <div className="sidebar-logo">Admin Panel</div>
+        <div className="sidebar-logo">
+          <img className="sidebar-logo-img" src="/logo-sec.png" alt="" />
+        </div>
 
         <ul className="sidebar-nav">
 
