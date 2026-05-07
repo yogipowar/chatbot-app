@@ -45,10 +45,21 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
         setError("");
     };
 
+    const isValidEmail = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         setError("");
+
+        if (!isValidEmail(username)) {
+            setError("Please enter a valid email address");
+            setSubmitting(false);
+            return;
+        }
 
         const formData = new FormData();
         formData.append("username", username);

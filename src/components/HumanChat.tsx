@@ -331,31 +331,20 @@ const HumanChat = () => {
                     if (!data.status) return;
 
                     const newConversations: any[] = data.data;
-                    const prev = prevConversationsRef.current;
                     const currentOpenId = selectedIdRef.current?.toString();
 
-                    newConversations.forEach((newConv) => {
-                        const oldConv = prev.find(
-                            (c) =>
-                                c.conversationId?.toString() ===
-                                newConv.conversationId?.toString()
-                        );
-
-                        const isNewMessage =
-                            !oldConv || oldConv.messageId !== newConv.messageId;
-
-                        const isOpenConversation =
-                            currentOpenId === newConv.conversationId?.toString();
-
-                        if (isNewMessage && isOpenConversation) {
-                            fetchMessages(newConv.conversationId);
-                            play();
-                        }
-
-                    });
-
-                    prevConversationsRef.current = newConversations;
                     setConversations(newConversations);
+                    prevConversationsRef.current = newConversations;
+
+                    const openConversation = newConversations.find(
+                        (conv) =>
+                            conv.conversationId?.toString() === currentOpenId
+                    );
+
+                    if (openConversation && currentOpenId) {
+                        fetchMessages(currentOpenId);
+                        play();
+                    }
                 })
                 .catch((err) => console.error("Fetch error:", err));
         };
@@ -366,6 +355,8 @@ const HumanChat = () => {
             socket.off("receive_message", handleIncomingMessage);
         };
     }, [adminId, play]);
+
+
 
     useEffect(() => {
         if (!selectedConversation) return;
@@ -398,17 +389,24 @@ const HumanChat = () => {
                 });
 
                 if (selectedIdRef.current) {
-                    socket.emit("join_room", { conversationId: selectedIdRef.current });
+                    socket.emit("join_room", {
+                        conversationId: selectedIdRef.current,
+                    });
                 }
             }
         };
 
         socket.on("connect", handleConnect);
 
+        if (socket.connected) {
+            handleConnect();
+        }
+
         return () => {
             socket.off("connect", handleConnect);
         };
     }, []);
+
 
     const handleBack = () => {
         setSelectedConversation(null);
