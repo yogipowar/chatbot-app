@@ -24,7 +24,7 @@ const AdminPanel = () => {
 
   // ✅ Search
   const [searchTerm, setSearchTerm] = useState("");
-
+  const BASE_URL = "https://chatbotapi.scrollosoft.com/";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,6 +72,8 @@ const AdminPanel = () => {
       );
 
       const data = await res.json();
+
+      console.log("dats\a1111111111111111111>>>>>>>", data)
 
       if (data.success) {
         setUsers(data.data);
@@ -173,7 +175,7 @@ const AdminPanel = () => {
                           {user.pdfUrl ? (
                             <a
                               className="resource-link"
-                              href={user.pdfUrl}
+                              href={`${BASE_URL}${user.pdfUrl}`}
                               target="_blank"
                               rel="noreferrer"
                             >
@@ -182,7 +184,7 @@ const AdminPanel = () => {
                           ) : user.sitemapUrl ? (
                             <a
                               className="resource-link"
-                              href={user.sitemapUrl}
+                              href={`${user.sitemapUrl}`}
                               target="_blank"
                               rel="noreferrer"
                             >
