@@ -139,7 +139,7 @@ function Chatbot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
 
-    // const id = "114"
+    // const id = "129"
 
     console.log("Website ID:", id);
 
@@ -173,8 +173,18 @@ function Chatbot() {
           "";
 
         setAdminEmail(adminMail);
+        const BASE_URL = "https://chatbotapi.scrollosoft.com/";
+        const getFullUrl = (url) => {
+          if (!url) return "";
+          if (url.startsWith("http")) return url;
 
-        const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
+          return `${BASE_URL}${url}`;
+        };
+
+        const urlToUse = result.user.sitemapUrl
+          ? getFullUrl(result.user.sitemapUrl)
+          : getFullUrl(result.user.pdfUrl);
+
         setActiveUrl(urlToUse);
 
         setIsActive(Number(result.user.isActive) === 1);

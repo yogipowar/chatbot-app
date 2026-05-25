@@ -1,5 +1,5 @@
 import { CodeXml, LayoutGrid, LocateFixed, LogOut, MessageCircle, Palette, ReceiptText, UserRound } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {

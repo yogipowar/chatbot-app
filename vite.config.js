@@ -1,8 +1,28 @@
-// vite.config.js
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [react()],
-  base: '/', 
+  server: {
+    proxy: {
+      '/api/fetch': {
+        target: 'https://chatbotapi.scrollosoft.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path,
+
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+
+            const url = new URL(req.url, 'http://localhost')
+
+            const targetUrl = url.searchParams.get('url')
+
+            if (targetUrl) {
+              proxyReq.path = new URL(targetUrl).pathname
+            }
+
+          })
+        },
+      },
+    },
+  },
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./HumanChat.css";
 import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";

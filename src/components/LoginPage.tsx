@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../components/socket";
 import { Eye, EyeOff } from "lucide-react";

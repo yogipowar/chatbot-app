@@ -24,93 +24,19 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { crawlSite } from "../api/crawlApi";
-import { generateCrawlPdf } from "../utils/generatePdf"
 import "./plans.css";
-
-
 
 // --- Sub-Component: AddAdminModal ---
 const AddAdminModal = ({ onClose, onSuccess }) => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [resourceType, setResourceType] = useState("website");
+    const [resourceType, setResourceType] = useState("sitemap");
     const [sitemapValue, setSitemapValue] = useState("");
     const [pdfFile, setPdfFile] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const navigate = useNavigate();
-
-    const [url, setUrl] = useState('')
-    const [maxPages, setMaxPages] = useState(1000)
-    const [loading, setLoading] = useState(false)
-    const [crawlError, setCrawlError] = useState(null)
-    const [loadingMessage, setLoadingMessage] = useState("")
-    const [showCrawlerDialog, setShowCrawlerDialog] = useState(false)
-    const [generatedPdf, setGeneratedPdf] = useState(null)
-
-    async function crawlhandleSubmit(e) {
-        e.preventDefault();
-
-        setLoading(true);
-        setCrawlError(null);
-        setShowCrawlerDialog(true);
-
-        try {
-
-            // Initial message
-            setLoadingMessage("Starting website crawl...");
-
-            const data = await crawlSite(
-                url,
-                {
-                    maxPages: Number(maxPages),
-
-                    // Progress callback
-                    onProgress: (current, total) => {
-                        setLoadingMessage(
-                            `Fetching pages ${current} / ${total}`
-                        );
-                    },
-                }
-            );
-
-            setLoadingMessage("Extracting content...");
-
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            setLoadingMessage("Generating PDF...");
-
-            const pdfBlob = await generateCrawlPdf(data);
-
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-
-            setGeneratedPdf(pdfUrl);
-
-            setLoadingMessage("Data fetched successfully");
-
-            setLoading(false);
-
-            setTimeout(() => {
-                setShowCrawlerDialog(false);
-            }, 2000);
-
-        } catch (err) {
-
-            console.error(err);
-
-            setLoading(false);
-
-            setCrawlError(err.message || "Failed to crawl website");
-
-            setLoadingMessage("Something went wrong");
-
-            setTimeout(() => {
-                setShowCrawlerDialog(false);
-            }, 2000);
-        }
-    }
 
     const handleResourceChange = (type) => {
         setResourceType(type);
@@ -126,103 +52,51 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         setSubmitting(true);
         setError("");
 
-        try {
+        if (!isValidEmail(username)) {
+            setError("Please enter a valid email address");
+            setSubmitting(false);
+            return;
+        }
 
-            if (!isValidEmail(username)) {
-                setError("Please enter a valid email address");
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("password", password);
+        formData.append("role", "2");
+
+        if (resourceType === "pdf") {
+            if (!pdfFile) {
+                setError("Please upload a PDF file");
                 setSubmitting(false);
                 return;
             }
-
-            const formData = new FormData();
-
-            formData.append("username", username);
-            formData.append("password", password);
-            formData.append("role", "2");
-
-            // =========================
-            // WEBSITE PDF
-            // =========================
-            if (resourceType === "website") {
-
-                if (!generatedPdf) {
-                    setError("Please generate PDF first");
-                    setSubmitting(false);
-                    return;
-                }
-
-                const response = await fetch(generatedPdf);
-
-                const blob = await response.blob();
-
-                const file = new File(
-                    [blob],
-                    "website-content.pdf",
-                    {
-                        type: "application/pdf",
-                    }
-                );
-
-                formData.append("uploaded_file", file);
+            formData.append("uploaded_file", pdfFile);
+        } else {
+            if (!sitemapValue.trim()) {
+                setError("Please enter Sitemap URL");
+                setSubmitting(false);
+                return;
             }
+            formData.append("sitemapUrl", sitemapValue);
+        }
 
-            // =========================
-            // PDF FILE
-            // =========================
-            else if (resourceType === "pdf") {
-
-                if (!pdfFile) {
-                    setError("Please upload a PDF file");
-                    setSubmitting(false);
-                    return;
-                }
-
-                formData.append("uploaded_file", pdfFile);
-            }
-
-            // =========================
-            // SITEMAP
-            // =========================
-            else if (resourceType === "sitemap") {
-
-                if (!sitemapValue.trim()) {
-                    setError("Please enter Sitemap URL");
-                    setSubmitting(false);
-                    return;
-                }
-
-                formData.append("sitemapUrl", sitemapValue);
-            }
-
-            const res = await fetch(
-                "https://chatbotapi.scrollosoft.com/users/register",
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
-
+        try {
+            const res = await fetch("https://chatbotapi.scrollosoft.com/users/register", {
+                method: "POST",
+                body: formData,
+            });
             const data = await res.json();
-
             if (data.status || data.success) {
                 onSuccess();
                 navigate("/login");
             } else {
                 setError(data.message || "Registration failed");
             }
-
-        } catch (err) {
-
-            console.error(err);
-
+        } catch {
             setError("Failed to register admin");
-
         } finally {
-
             setSubmitting(false);
         }
     };
@@ -270,21 +144,13 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                         <label>Knowledge Source</label>
 
                         <div className="radio-group">
-                            {/* <label className={resourceType === "sitemap" ? "active" : ""}>
+                            <label className={resourceType === "sitemap" ? "active" : ""}>
                                 <input
                                     type="radio"
                                     checked={resourceType === "sitemap"}
                                     onChange={() => handleResourceChange("sitemap")}
                                 />
                                 Sitemap URL
-                            </label> */}
-                            <label className={resourceType === "website" ? "active" : ""}>
-                                <input
-                                    type="radio"
-                                    checked={resourceType === "website"}
-                                    onChange={() => handleResourceChange("website")}
-                                />
-                                Website URL
                             </label>
                             <label className={resourceType === "pdf" ? "active" : ""}>
                                 <input
@@ -295,12 +161,10 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                                 PDF Document
                             </label>
 
-
                         </div>
                     </div>
                     <div className="form-group">
-
-                        {resourceType === "pdf" && (
+                        {resourceType === "pdf" ? (
                             <div className="file-upload-wrapper">
                                 <input
                                     type="file"
@@ -308,14 +172,11 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                                     onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                                     id="pdf-upload"
                                 />
-
                                 <label htmlFor="pdf-upload" className="file-label">
                                     {pdfFile ? `Selected: ${pdfFile.name}` : "Click to upload PDF"}
                                 </label>
                             </div>
-                        )}
-
-                        {/* {resourceType === "sitemap" && (
+                        ) : (
                             <input
                                 type="text"
                                 value={sitemapValue}
@@ -323,95 +184,6 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                                 placeholder="https://example.com/sitemap.xml"
                                 className="full-input"
                             />
-                        )} */}
-
-                        {resourceType === "website" && (
-                            <div className="app">
-
-                                <div className="url-form">
-
-                                    <label htmlFor="site-url">Website URL</label>
-
-                                    <div className="url-row">
-                                        <input
-                                            id="site-url"
-                                            type="url"
-                                            placeholder="https://example.com"
-                                            value={url}
-                                            onChange={(e) => setUrl(e.target.value)}
-                                            disabled={loading}
-                                            required
-                                        />
-
-                                        <button
-                                            type="button"
-                                            onClick={crawlhandleSubmit}
-                                            disabled={loading || !url.trim()}
-                                        >
-                                            {loading ? "Crawling..." : "crawl"}
-                                        </button>
-                                    </div>
-
-                                    {/* <div className="options">
-                                        <label htmlFor="max-pages">Max pages</label>
-
-                                        <input
-                                            id="max-pages"
-                                            type="number"
-                                            min={1}
-                                            max={1000}
-                                            value={maxPages}
-                                            onChange={(e) => setMaxPages(e.target.value)}
-                                            disabled={loading}
-                                        />
-                                    </div> */}
-                                </div>
-
-                                {generatedPdf && (
-                                    <div className="generated-pdf-preview">
-
-                                        <h4>Generated PDF</h4>
-
-                                        <iframe
-                                            src={generatedPdf}
-                                            title="Generated PDF"
-                                            width="100%"
-                                            height="400px"
-                                        />
-
-                                        <a
-                                            href={generatedPdf}
-                                            download="website-content.pdf"
-                                            className="download-btn"
-                                        >
-                                            Download PDF
-                                        </a>
-                                    </div>
-                                )}
-
-                                {crawlError && (
-                                    <div className="error-banner">
-                                        {crawlError}
-                                    </div>
-                                )}
-
-                                {showCrawlerDialog && (
-                                    <div className="crawler-dialog-overlay">
-                                        <div className="crawler-dialog">
-
-                                            <div className="loader"></div>
-
-                                            <h3>{loadingMessage}</h3>
-
-                                            <p>
-                                                Please wait while we crawl the website and prepare your PDF.
-                                            </p>
-
-                                        </div>
-                                    </div>
-                                )}
-
-                            </div>
                         )}
                     </div>
                     {error && <div className="modal-error">{error}</div>}
@@ -432,76 +204,96 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                     </div>
 
                 </form>
-
-
-                {/* <div className="app">
-
-                    <form className="url-form" onSubmit={crawlhandleSubmit}>
-                        <label htmlFor="site-url">Website URL</label>
-                        <div className="url-row">
-                            <input
-                                id="site-url"
-                                type="url"
-                                placeholder="https://example.com"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                disabled={loading}
-                                required
-                            />
-                            <button type="submit" disabled={loading || !url.trim()}>
-                                {loading ? 'Crawling…' : 'Crawl site'}
-                            </button>
-                        </div>
-
-                        <div className="options">
-                            <label htmlFor="max-pages">Max pages</label>
-                            <input
-                                id="max-pages"
-                                type="number"
-                                min={1}
-                                max={1000}
-                                value={maxPages}
-                                onChange={(e) => setMaxPages(e.target.value)}
-                                disabled={loading}
-                            />
-                        </div>
-                    </form>
-
-
-                    {crawlError && <div className="error-banner">{crawlError}</div>}
-
-                    {showCrawlerDialog && (
-                        <div className="crawler-dialog-overlay">
-                            <div className="crawler-dialog">
-                                <div className="loader"></div>
-
-                                <h3>{loadingMessage}</h3>
-
-                                <p>
-                                    Please wait while we crawl the website and prepare your PDF.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {loading && (
-                        <div className="progress">
-                            <p>Crawling website using Puppeteer...</p>
-                        </div>
-                    )}
-
-
-                </div> */}
             </div>
         </div>
     );
 };
+
+
+const guidelines = [
+    {
+        title: "Prove Your Success",
+        text: "Include evidence of your academic achievements, like admission letters or certificates.",
+        icon: "trophy",
+    },
+    {
+        title: "Authentic Submissions",
+        text: "Share unique profiles with genuine experiences to stand out and build trust.",
+        icon: "globe",
+    },
+    {
+        title: "Comprehensive Profile Quality",
+        text: "Ensure your profile includes original, well-structured essays tailored to diverse academic needs.",
+        icon: "user",
+    },
+    {
+        title: "Privacy Promise",
+        text: "We respect your privacy. If we don't use your work, we'll delete all your info and the work from our system.",
+        icon: "lock",
+    },
+];
+
+function GuidelineIcon({ type }) {
+    const commonProps = {
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "1.7",
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": "true",
+    };
+
+    if (type === "trophy") {
+        return (
+            <svg {...commonProps}>
+                <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" />
+                <path d="M8 6H5.5a2 2 0 0 0 2 3.2" />
+                <path d="M16 6h2.5a2 2 0 0 1-2 3.2" />
+                <path d="M12 12v4" />
+                <path d="M9 20h6" />
+                <path d="M10 16h4" />
+            </svg>
+        );
+    }
+
+    if (type === "globe") {
+        return (
+            <svg {...commonProps}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3.6 9h16.8" />
+                <path d="M3.6 15h16.8" />
+                <path d="M12 3a14.7 14.7 0 0 1 0 18" />
+                <path d="M12 3a14.7 14.7 0 0 0 0 18" />
+            </svg>
+        );
+    }
+
+    if (type === "user") {
+        return (
+            <svg {...commonProps}>
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+            </svg>
+        );
+    }
+
+    return (
+        <svg {...commonProps}>
+            <rect x="5" y="10" width="14" height="10" rx="1.6" />
+            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            <path d="M12 14v2" />
+        </svg>
+    );
+}
 
 // --- Main Component ---
 const Plans = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [billingCycle, setBillingCycle] = useState("annual");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(1);
+
     const elitePrice = billingCycle === "monthly" ? 25 : 20;
     const elitePeriod = billingCycle === "monthly" ? "/month" : "/mo (billed annually)";
     const navigate = useNavigate();
@@ -619,6 +411,15 @@ const Plans = () => {
         },
     ];
 
+
+    useEffect(() => {
+        const slideTimer = setInterval(() => {
+            setActiveIndex((currentIndex) => (currentIndex + 1) % guidelines.length);
+        }, 2600);
+
+        return () => clearInterval(slideTimer);
+    }, []);
+
     return (
         <div className="landing-page">
             <nav className={`landing-nav ${isScrolled ? "scrolled" : ""}`}>
@@ -667,6 +468,34 @@ const Plans = () => {
                         <span>{stat.label}</span>
                     </div>
                 ))}
+            </section>
+
+            <section className="guidelines-section" aria-labelledby="guidelines-title">
+                <div className="guidelines-copy">
+                    <h1 id="guidelines-title">Guidelines For Selling Your Profiles</h1>
+                    <p>
+                        Create profiles that captivate buyers and offer valuable, high-quality
+                        content to help students reach their dream universities.
+                    </p>
+                </div>
+
+                <div className="guidelines-slider" aria-label="Selling profile guidelines">
+                    {guidelines.map((guideline, index) => (
+                        <article
+                            className={`guideline-card ${index === activeIndex ? "is-active" : ""}`}
+                            key={guideline.title}
+                            aria-current={index === activeIndex ? "true" : undefined}
+                        >
+                            <div className="guideline-icon">
+                                <GuidelineIcon type={guideline.icon} />
+                            </div>
+                            <div className="guideline-content">
+                                <h2>{guideline.title}</h2>
+                                <p>{guideline.text}</p>
+                            </div>
+                        </article>
+                    ))}
+                </div>
             </section>
 
             <section className="landing-problem">
