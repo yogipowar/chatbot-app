@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Send, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -139,7 +139,7 @@ function Chatbot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
 
-    // const id = "129"
+    // const id = "139"
 
     console.log("Website ID:", id);
 
