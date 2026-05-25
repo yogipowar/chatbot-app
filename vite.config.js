@@ -4,22 +4,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/fetch': {
-        target: 'https://chatbotapi.scrollosoft.com',
+        target: 'https://example.com',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path,
-
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq, req) => {
-
             const url = new URL(req.url, 'http://localhost')
-
             const targetUrl = url.searchParams.get('url')
 
             if (targetUrl) {
               proxyReq.path = new URL(targetUrl).pathname
             }
-
           })
         },
       },
