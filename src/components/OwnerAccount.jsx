@@ -22,7 +22,7 @@ const OwnerAccount = () => {
     const [resourceType, setResourceType] = useState("sitemap");
 
     const [url, setUrl] = useState("");
-    const [maxPages, setMaxPages] = useState(1000);
+    const [maxPages, setMaxPages] = useState(100000);
 
     const [loadingCrawl, setLoadingCrawl] = useState(false);
     const [crawlError, setCrawlError] = useState("");
@@ -298,7 +298,7 @@ const OwnerAccount = () => {
                                         <input
                                             type="number"
                                             min={1}
-                                            max={1000}
+                                            max={100000}
                                             value={maxPages}
                                             onChange={(e) => setMaxPages(e.target.value)}
                                         />

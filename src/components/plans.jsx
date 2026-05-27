@@ -43,7 +43,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
     const navigate = useNavigate();
 
     const [url, setUrl] = useState('')
-    const [maxPages, setMaxPages] = useState(1000)
+    const [maxPages, setMaxPages] = useState(100000)
     const [loading, setLoading] = useState(false)
     const [crawlError, setCrawlError] = useState(null)
     const [loadingMessage, setLoadingMessage] = useState("")
