@@ -70,7 +70,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                     // Progress callback
                     onProgress: (current, total) => {
                         setLoadingMessage(
-                            `Fetching pages ${current} / ${total}`
+                            `Crawled ${current} pages...`
                         );
                     },
                 }

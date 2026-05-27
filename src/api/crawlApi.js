@@ -1,4 +1,24 @@
 export async function crawlSite(url, options = {}) {
+
+  const { onProgress, maxPages = 20 } = options;
+
+  let current = 0;
+
+  // Fake progress animation
+  const interval = setInterval(() => {
+
+    current++;
+
+    if (onProgress) {
+      onProgress(current, maxPages);
+    }
+
+    if (current >= maxPages) {
+      clearInterval(interval);
+    }
+
+  }, 1000);
+
   const response = await fetch('http://localhost:5000/crawl', {
     method: 'POST',
     headers: {
@@ -6,15 +26,22 @@ export async function crawlSite(url, options = {}) {
     },
     body: JSON.stringify({
       url,
-      maxPages: options.maxPages || 20,
+      maxPages,
     }),
-  })
+  });
 
-  const data = await response.json()
+  clearInterval(interval);
+
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to crawl')
+    throw new Error(data.error || 'Failed to crawl');
   }
 
-  return data
+  // Final progress
+  if (onProgress) {
+    onProgress(maxPages, maxPages);
+  }
+
+  return data;
 }
