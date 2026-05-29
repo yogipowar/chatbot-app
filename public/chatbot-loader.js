@@ -19,6 +19,7 @@
         .then(res => res.json())
         .then(result => {
             const user = result?.user || {};
+            console.log("websiteId 111", websiteId)
 
             // 🎨 Dynamic values (with fallback)
             const primaryColor = user.primaryColor || "#009DE1";
