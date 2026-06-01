@@ -1,7 +1,8 @@
 (function () {
     console.log("Chatbot loader running");
 
-    const websiteId = window.chatbotConfig?.websiteId;
+    // const websiteId = window.chatbotConfig?.websiteId;
+    const websiteId = 503;
 
     if (!websiteId) {
         console.error("Website ID missing");
