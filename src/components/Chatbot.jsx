@@ -137,9 +137,9 @@ function Chatbot() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("websiteId");
+    // const id = params.get("websiteId");
 
-    // const id = "114"
+    const id = "157"
 
     console.log("Website ID:", id);
 
@@ -165,6 +165,8 @@ function Chatbot() {
       const result = await response.json();
 
       if (result.status && result.user) {
+        setWebsiteId(result.user.id);
+
         const adminMail =
           result.user.email ||
           result.user.username ||
@@ -173,8 +175,18 @@ function Chatbot() {
           "";
 
         setAdminEmail(adminMail);
+        const BASE_URL = "https://chatbotapi.scrollosoft.com/";
+        const getFullUrl = (url) => {
+          if (!url) return "";
+          if (url.startsWith("http")) return url;
 
-        const urlToUse = result.user.sitemapUrl || result.user.pdfUrl;
+          return `${BASE_URL}${url}`;
+        };
+
+        const urlToUse = result.user.sitemapUrl
+          ? getFullUrl(result.user.sitemapUrl)
+          : getFullUrl(result.user.pdfUrl);
+
         setActiveUrl(urlToUse);
 
         setIsActive(Number(result.user.isActive) === 1);
@@ -264,7 +276,7 @@ function Chatbot() {
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    if (!activeUrl) {
+    if (!websiteId) {
       setMessages((prev) => [
         ...prev,
         {
@@ -297,7 +309,7 @@ function Chatbot() {
         },
         body: JSON.stringify({
           question: userQuestion,
-          url: activeUrl,
+           userId: websiteId,
         }),
       });
 
@@ -1007,13 +1019,13 @@ function Chatbot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Ask something..."
-            disabled={!isActive || isLoading || !activeUrl}
+            disabled={!isActive || isLoading }
             className="auto-expand-input"
           />
 
           <button
             onClick={activeTab === "ai" ? sendMessage : sendHumanMessage}
-            disabled={!isActive || isLoading || !activeUrl}
+            disabled={!isActive || isLoading}
           >
             <Send size={18} />
           </button>
