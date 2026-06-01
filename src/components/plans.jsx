@@ -25,25 +25,18 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./plans.css";
+import WebsiteModal from "./WebsiteModal";
 
 // --- Sub-Component: AddAdminModal ---
 const AddAdminModal = ({ onClose, onSuccess }) => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [resourceType, setResourceType] = useState("sitemap");
-    const [sitemapValue, setSitemapValue] = useState("");
-    const [pdfFile, setPdfFile] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const handleResourceChange = (type) => {
-        setResourceType(type);
-        setPdfFile(null);
-        setSitemapValue("");
-        setError("");
-    };
+
 
     const isValidEmail = (email) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -66,35 +59,23 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
         formData.append("password", password);
         formData.append("role", "2");
 
-        if (resourceType === "pdf") {
-            if (!pdfFile) {
-                setError("Please upload a PDF file");
-                setSubmitting(false);
-                return;
-            }
-            formData.append("uploaded_file", pdfFile);
-        } else {
-            if (!sitemapValue.trim()) {
-                setError("Please enter Sitemap URL");
-                setSubmitting(false);
-                return;
-            }
-            formData.append("sitemapUrl", sitemapValue);
-        }
-
         try {
-            const res = await fetch("https://chatbotapi.scrollosoft.com/users/register", {
-                method: "POST",
-                body: formData,
-            });
+            const res = await fetch(
+                "https://chatbotapi.scrollosoft.com/users/register",
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
             const data = await res.json();
+
             if (data.status || data.success) {
-                onSuccess();
-                navigate("/login");
+                onSuccess(data.user.id); // pass the created user id
             } else {
                 setError(data.message || "Registration failed");
             }
-        } catch {
+        } catch (err) {
             setError("Failed to register admin");
         } finally {
             setSubmitting(false);
@@ -140,52 +121,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Knowledge Source</label>
 
-                        <div className="radio-group">
-                            <label className={resourceType === "sitemap" ? "active" : ""}>
-                                <input
-                                    type="radio"
-                                    checked={resourceType === "sitemap"}
-                                    onChange={() => handleResourceChange("sitemap")}
-                                />
-                                Sitemap URL
-                            </label>
-                            <label className={resourceType === "pdf" ? "active" : ""}>
-                                <input
-                                    type="radio"
-                                    checked={resourceType === "pdf"}
-                                    onChange={() => handleResourceChange("pdf")}
-                                />
-                                PDF Document
-                            </label>
-
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        {resourceType === "pdf" ? (
-                            <div className="file-upload-wrapper">
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                                    id="pdf-upload"
-                                />
-                                <label htmlFor="pdf-upload" className="file-label">
-                                    {pdfFile ? `Selected: ${pdfFile.name}` : "Click to upload PDF"}
-                                </label>
-                            </div>
-                        ) : (
-                            <input
-                                type="text"
-                                value={sitemapValue}
-                                onChange={(e) => setSitemapValue(e.target.value)}
-                                placeholder="https://example.com/sitemap.xml"
-                                className="full-input"
-                            />
-                        )}
-                    </div>
                     {error && <div className="modal-error">{error}</div>}
                     <div className="modal-actions">
                         <button type="button" className="modal-cancel-btn" onClick={onClose}>Cancel</button>
@@ -209,11 +145,15 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
     );
 };
 
+
+
 // --- Main Component ---
 const Plans = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [billingCycle, setBillingCycle] = useState("annual");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isWebsiteModalOpen, setIsWebsiteModalOpen] = useState(false);
+    const [createdUserId, setCreatedUserId] = useState(null);
     const elitePrice = billingCycle === "monthly" ? 25 : 20;
     const elitePeriod = billingCycle === "monthly" ? "/month" : "/mo (billed annually)";
     const navigate = useNavigate();
@@ -226,8 +166,10 @@ const Plans = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const handleSuccess = () => {
+    const handleSuccess = (userId) => {
+        setCreatedUserId(userId);
         setIsModalOpen(false);
+        setIsWebsiteModalOpen(true);
     };
 
     const features = [
@@ -610,6 +552,13 @@ const Plans = () => {
                 <AddAdminModal
                     onClose={() => setIsModalOpen(false)}
                     onSuccess={handleSuccess}
+                />
+            )}
+
+            {isWebsiteModalOpen && (
+                <WebsiteModal
+                    userId={createdUserId}
+                    onClose={() => setIsWebsiteModalOpen(false)}
                 />
             )}
 
