@@ -25,6 +25,64 @@ const saveChatToLocal = (question, data) => {
   }
 };
 
+const CHAT_NO_RESPONSE = "No response received";
+const CHAT_BUSY_MESSAGE =
+  "The AI is temporarily busy. Please try again in a moment.";
+const CHAT_MAX_ATTEMPTS = 6;
+const CHAT_RETRY_DELAY_MS = 3000;
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const parseChatApiResponse = (data) => {
+  const text =
+    typeof data?.data === "string" ? data.data.trim() : "";
+
+  if (
+    data?.status &&
+    text &&
+    text !== CHAT_NO_RESPONSE
+  ) {
+    return text;
+  }
+
+  return CHAT_NO_RESPONSE;
+};
+
+const fetchChatResponse = async (question, userId) => {
+  let botResponse = CHAT_NO_RESPONSE;
+
+  for (let attempt = 0; attempt < CHAT_MAX_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      await delay(CHAT_RETRY_DELAY_MS * attempt + Math.random() * 500);
+    }
+
+    try {
+      const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question,
+          userId,
+        }),
+      });
+
+      const data = await response.json();
+      botResponse = parseChatApiResponse(data);
+
+      if (botResponse !== CHAT_NO_RESPONSE) {
+        return botResponse;
+      }
+    } catch (error) {
+      console.error("Chat API attempt failed:", error);
+      botResponse = CHAT_NO_RESPONSE;
+    }
+  }
+
+  return CHAT_BUSY_MESSAGE;
+};
+
 const saveChatAgainstUserId = (userId, userEmail, conversationId = null) => {
   try {
     const chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
@@ -91,6 +149,8 @@ function Chatbot() {
   const aiMessagesEndRef = useRef(null);
   const humanMessagesEndRef = useRef(null);
   const convIdRef = useRef(conversationId);
+  const activeTabRef = useRef(activeTab);
+  const isSyncingConversationRef = useRef(false);
 
   const { play } = useSound(notification);
 
@@ -273,6 +333,79 @@ function Chatbot() {
     }
   };
 
+  const sendChatMessageToConversation = async (message, messageById, convId) => {
+    if (!message || !convId || !messageById) return;
+
+    try {
+      await fetch("https://chatbotapi.scrollosoft.com/conversation/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          messageById,
+          conversationId: convId,
+        }),
+      });
+    } catch (error) {
+      console.error("Send chat history message error:", error);
+    }
+  };
+
+  const refreshConversationMessageList = async (convId) => {
+    if (!convId) return;
+
+    try {
+      const response = await fetch(
+        `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${convId}`
+      );
+
+      const result = await response.json();
+
+      if (!result?.status) return;
+
+      const allMessages = result.data || [];
+      const onlyHumanMessages = allMessages.filter(
+        (msg) => !isAiHistoryMessage(msg)
+      );
+
+      setHumanMessages(onlyHumanMessages);
+
+      if (allMessages.length > 0) {
+        const status = allMessages[allMessages.length - 1].conversationStatus;
+
+        setConversationStatus(status);
+
+        if (status === "closed") {
+          setHasHumanChat(false);
+          localStorage.setItem("hasHumanChat", "false");
+          setActiveTab("ai");
+          setConversationId(null);
+          localStorage.removeItem("conversationId");
+        } else {
+          setHasHumanChat(true);
+          localStorage.setItem("hasHumanChat", "true");
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing conversation messages:", error);
+    }
+  };
+
+  const syncAiExchangeToConversation = async (convId, userQuestion, botResponse) => {
+    isSyncingConversationRef.current = true;
+
+    try {
+      const message = `[AI_HISTORY_USER] ${userQuestion}\n[AI_HISTORY_BOT] ${botResponse}`;
+
+      await sendChatMessageToConversation(message, "ai_bot", convId);
+      await refreshConversationMessageList(convId);
+    } finally {
+      isSyncingConversationRef.current = false;
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -302,33 +435,19 @@ function Chatbot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://chatbotapi.scrollosoft.com/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: userQuestion,
-           userId: websiteId,
-        }),
-      });
-
-      const data = await response.json();
-      const botResponse = data?.data || "No response received";
+      const botResponse = await fetchChatResponse(userQuestion, websiteId);
 
       saveChatToLocal(userQuestion, botResponse);
 
-      if (conversationId && userId) {
-        await sendChatMessageToConversation(
-          `[AI_HISTORY_USER] ${userQuestion}`,
-          "ai_history_user",
-          conversationId
-        );
-
-        await sendChatMessageToConversation(
-          `[AI_HISTORY_BOT] ${botResponse}`,
-          "ai_bot",
-          conversationId
+      if (
+        conversationId &&
+        botResponse !== CHAT_NO_RESPONSE &&
+        botResponse !== CHAT_BUSY_MESSAGE
+      ) {
+        await syncAiExchangeToConversation(
+          conversationId,
+          userQuestion,
+          botResponse
         );
       }
 
@@ -466,7 +585,6 @@ function Chatbot() {
               loggedInUserId
             );
 
-            await fetchHumanMessages(existingConversationId);
             setActiveTab("human");
 
             console.log("Existing Conversation ID:", existingConversationId);
@@ -515,7 +633,6 @@ function Chatbot() {
                 loggedInUserId
               );
 
-              await fetchHumanMessages(newConversationId);
               setActiveTab("human");
 
               console.log("New Conversation ID:", newConversationId);
@@ -538,68 +655,23 @@ function Chatbot() {
     setIsHumanLoading(true);
 
     try {
-      const response = await fetch(
-        `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${convId}`
-      );
-
-      const result = await response.json();
-      console.log("Human Messages:", result);
-
-      if (result?.status) {
-        const onlyHumanMessages = (result.data || []).filter(
-          (msg) => !isAiHistoryMessage(msg)
-        );
-
-        setHumanMessages(onlyHumanMessages);
-
-        if (result.data?.length > 0) {
-          setConversationStatus(
-            result.data[result.data.length - 1].conversationStatus
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching human messages:", error);
+      await refreshConversationMessageList(convId);
     } finally {
       setIsHumanLoading(false);
     }
   };
 
   const checkConversationStatus = async (convId) => {
-    if (!convId) return;
-
-    try {
-      const response = await fetch(
-        `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${convId}`
-      );
-
-      const result = await response.json();
-
-      if (result?.status && result.data.length > 0) {
-        const status = result.data[result.data.length - 1].conversationStatus;
-
-        setConversationStatus(status);
-
-        if (status === "closed") {
-          setHasHumanChat(false);
-          localStorage.setItem("hasHumanChat", "false");
-
-          setActiveTab("ai");
-          setConversationId(null);
-          localStorage.removeItem("conversationId");
-        } else {
-          setHasHumanChat(true);
-          localStorage.setItem("hasHumanChat", "true");
-        }
-      }
-    } catch (error) {
-      console.error("Error checking conversation status:", error);
-    }
+    await refreshConversationMessageList(convId);
   };
 
   useEffect(() => {
     convIdRef.current = conversationId;
   }, [conversationId]);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     const handleIncomingMessage = async (data) => {
@@ -614,43 +686,22 @@ function Chatbot() {
         }
       }
 
-      const isFromCurrentUser = String(data.messageById) === String(userId);
-      const isAiMessage = isAiHistoryMessage(data);
+      if (
+        isSyncingConversationRef.current ||
+        isAiHistoryMessage(data) ||
+        activeTabRef.current !== "human"
+      ) {
+        return;
+      }
 
-      if (isFromCurrentUser && isAiMessage) {
-        // alert(isFromCurrentUser , isAiMessage)
+      const isFromCurrentUser = String(data.messageById) === String(userId);
+
+      if (isFromCurrentUser) {
         play();
       }
 
       try {
-        const response = await fetch(
-          `https://chatbotapi.scrollosoft.com/conversation/message-list?conversationId=${currentId}`
-        );
-
-        const result = await response.json();
-
-        if (result?.status) {
-          const messages = (result.data || []).filter(
-            (msg) => !isAiHistoryMessage(msg)
-          );
-
-          setHumanMessages(messages);
-
-          if (messages.length > 0) {
-            const lastMsg = messages[messages.length - 1];
-            setConversationStatus(lastMsg.conversationStatus);
-
-            if (lastMsg.conversationStatus === "closed") {
-              setHasHumanChat(false);
-              setActiveTab("ai");
-              setConversationId(null);
-              setHumanMessages([]);
-
-              localStorage.setItem("hasHumanChat", "false");
-              localStorage.removeItem("conversationId");
-            }
-          }
-        }
+        await refreshConversationMessageList(currentId);
       } catch (err) {
         console.error("Fetch error:", err);
       }
@@ -718,7 +769,6 @@ function Chatbot() {
   useEffect(() => {
     if (activeTab === "human" && conversationId) {
       fetchHumanMessages(conversationId);
-      checkConversationStatus(conversationId);
     }
   }, [activeTab, conversationId]);
 
@@ -837,50 +887,24 @@ function Chatbot() {
       const alreadySentKey = `aiChatSent_${convId}`;
       if (localStorage.getItem(alreadySentKey) === "true") return;
 
-      for (const chat of chatHistory) {
-        if (chat.question) {
-          await sendChatMessageToConversation(
-            `[AI_HISTORY_USER] ${chat.question}`,
-            "ai_history_user",
-            convId
-          );
-        }
+      isSyncingConversationRef.current = true;
 
-        if (chat.data) {
-          await sendChatMessageToConversation(
-            `[AI_HISTORY_BOT] ${chat.data}`,
-            "ai_bot",
-            convId
-          );
-        }
+      for (const chat of chatHistory) {
+        if (!chat.question && !chat.data) continue;
+
+        const message = `[AI_HISTORY_USER] ${chat.question || ""}\n[AI_HISTORY_BOT] ${chat.data || ""}`;
+
+        await sendChatMessageToConversation(message, "ai_bot", convId);
       }
 
       localStorage.setItem(alreadySentKey, "true");
     } catch (error) {
       console.error("Send stored AI chat error:", error);
+    } finally {
+      isSyncingConversationRef.current = false;
     }
   };
 
-
-  const sendChatMessageToConversation = async (message, messageById, convId) => {
-    if (!message || !convId || !messageById) return;
-
-    try {
-      await fetch("https://chatbotapi.scrollosoft.com/conversation/send-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message,
-          messageById,
-          conversationId: convId,
-        }),
-      });
-    } catch (error) {
-      console.error("Send chat history message error:", error);
-    }
-  };
 
   return (
     <div className="chatbotContainer">
