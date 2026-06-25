@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +22,38 @@ const Customize = () => {
 
   const [uploadedFile, setUploadedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(defaultWelcomeImage);
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await axios.post(
+        "https://chatbotapi.scrollosoft.com/users/get-details",
+        {
+          id: adminId,
+        }
+      );
+
+      if (response.data.status) {
+        const user = response.data.user;
+
+        setFormData({
+          welcomeImageOpt: user?.welcomeImageOpt || "1",
+          welcomeHeader: user?.welcomeHeader || "",
+          welcomeMessage: user?.welcomeMessage || "",
+          buttonText: user?.buttonText || "",
+        });
+
+        if (user?.welcomeImage) {
+          setImagePreview(
+            `https://chatbotapi.scrollosoft.com/uploads/${user.welcomeImage}`
+          );
+        } else {
+          setImagePreview(defaultWelcomeImage);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load settings", error);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,7 +125,10 @@ const Customize = () => {
         });
 
         // If welcomeImage is null then show default image
-        if (user?.welcomeImage) {
+        if (
+          user?.welcomeImageOpt === "2" &&
+          user?.welcomeImage
+        ) {
           setImagePreview(
             `https://chatbotapi.scrollosoft.com/uploads/${user.welcomeImage}`
           );
@@ -106,12 +141,18 @@ const Customize = () => {
 
       toast.error(
         error?.response?.data?.message ||
-          "Something went wrong"
+        "Something went wrong"
       );
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (adminId) {
+      fetchUserSettings();
+    }
+  }, [adminId]);
 
   return (
     <div className="dashboard-layout">
