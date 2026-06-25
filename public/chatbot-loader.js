@@ -1,8 +1,8 @@
 (function () {
     console.log("Chatbot loader running");
 
-    // const websiteId = window.chatbotConfig?.websiteId;
-    const websiteId = 503;
+    const websiteId = window.chatbotConfig?.websiteId;
+    // const websiteId = 503;
 
     if (!websiteId) {
         console.error("Website ID missing");
@@ -26,8 +26,34 @@
             const primaryColor = user.primaryColor || "#009DE1";
             const secondaryColor = user.secondaryColor || "#0488c1";
             const chatPosition = user.chatPosition || "right";
+            
+            const buttonText =
+                user.buttonText?.trim() || "Chat with us 👋";
 
             const isRight = chatPosition === "right";
+
+            // Chat Label
+            const chatLabel = document.createElement("div");
+
+            chatLabel.innerHTML = `<span>${buttonText}</span>`;
+
+            Object.assign(chatLabel.style, {
+                position: "fixed",
+                bottom: "85px",
+                [isRight ? "right" : "left"]: "20px",
+                background: "#fff",
+                color: "#222",
+                padding: "12px 20px",
+                borderRadius: "16px",
+                fontSize: "14px",
+                fontWeight: "500",
+                fontFamily: "Arial, sans-serif",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                zIndex: "9999",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.3s ease",
+            });
 
             // 🔘 Create Button
             const button = document.createElement("div");
@@ -78,6 +104,33 @@
 
             let isOpen = false;
 
+            const toggleChat = () => {
+                isOpen = !isOpen;
+
+                if (isOpen) {
+                    iframe.style.display = "block";
+
+                    setTimeout(() => {
+                        iframe.style.opacity = "1";
+                        iframe.style.transform = "translateY(0)";
+                    }, 10);
+
+                    chatLabel.style.display = "none";
+                } else {
+                    iframe.style.opacity = "0";
+                    iframe.style.transform = "translateY(20px)";
+
+                    setTimeout(() => {
+                        iframe.style.display = "none";
+                    }, 300);
+
+                    chatLabel.style.display = "block";
+                }
+            };
+
+            button.onclick = toggleChat;
+            chatLabel.onclick = toggleChat;
+
             // 🎯 Toggle Chat
             button.onclick = () => {
                 isOpen = !isOpen;
@@ -109,7 +162,7 @@
             button.onmouseleave = () => {
                 if (!isOpen) button.style.transform = "scale(1)";
             };
-
+            document.body.appendChild(chatLabel);
             document.body.appendChild(button);
             document.body.appendChild(iframe);
         })

@@ -109,6 +109,17 @@ const AdminSidebar = ({ onLogout }: { onLogout: () => void }) => {
                 </a>
               </li>
 
+               <li>
+                <a
+                  className={
+                    location.pathname === "/customize" ? "active" : ""
+                  }
+                  onClick={() => navigate("/customize")}
+                >
+                  <CodeXml /> customize
+                </a>
+              </li>
+
               <li>
                 <a
                   className={

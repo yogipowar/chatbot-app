@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import "./chatbot.css";
 import BotIcon from "./BotIcon";
 import { socket } from "../components/socket";
@@ -144,7 +145,9 @@ function Chatbot() {
   const [adminEmail, setAdminEmail] = useState("");
   const [emailOnlyMode, setEmailOnlyMode] = useState(false);
   const [conversationStatus, setConversationStatus] = useState(null);
-
+  const [welcomeImage, setWelcomeImage] = useState("/logo-sec.png");
+  const [welcomeHeader, setWelcomeHeader] = useState("Enter Your Email");
+  const [welcomeMessage, setWelcomeMessage] = useState("Please enter your email to continue.")
   const textareaRef = useRef(null);
   const aiMessagesEndRef = useRef(null);
   const humanMessagesEndRef = useRef(null);
@@ -199,7 +202,7 @@ function Chatbot() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("websiteId");
 
-    // const id = "503"
+    // const id = "517"
 
     console.log("Website ID:", id);
 
@@ -226,6 +229,22 @@ function Chatbot() {
 
       if (result.status && result.user) {
         setWebsiteId(result.user.id);
+
+        setWelcomeMessage(
+          result.user.welcomeMessage || "Please enter your email to continue."
+        )
+
+        setWelcomeHeader(
+          result.user.welcomeHeader || "Enter Your Email"
+        );
+
+        if (result.user.welcomeImage) {
+          setWelcomeImage(
+            `https://chatbotapi.scrollosoft.com/uploads/${result.user.welcomeImage}`
+          );
+        } else {
+          setWelcomeImage("/logo-sec.png");
+        }
 
         const adminMail =
           result.user.email ||
@@ -959,7 +978,15 @@ function Chatbot() {
                       }`}
                   >
                     {msg.sender === "bot" ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw]}
+                        components={{
+                          a: ({ node, ...props }) => (
+                            <a {...props} target="_blank" rel="noopener noreferrer" />
+                          ),
+                        }}
+                      >
                         {msg.text}
                       </ReactMarkdown>
                     ) : (
@@ -996,7 +1023,15 @@ function Chatbot() {
                       )}
 
                       <div className="messageBubble">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw]}
+                          components={{
+                            a: ({ node, ...props }) => (
+                              <a {...props} target="_blank" rel="noopener noreferrer" />
+                            ),
+                          }}
+                        >
                           {msg.text}
                         </ReactMarkdown>
 
@@ -1043,7 +1078,7 @@ function Chatbot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Ask something..."
-            disabled={!isActive || isLoading }
+            disabled={!isActive || isLoading}
             className="auto-expand-input"
           />
 
@@ -1059,14 +1094,25 @@ function Chatbot() {
       {showHumanDrawer && (
         <div className="humanDrawerOverlay">
           <div className="humanDrawer">
-            <h3>{emailOnlyMode ? "Enter Your Email" : "Connect With Human"}</h3>
 
-            <p>
-              {emailOnlyMode
-                ? "Please enter your email to continue."
-                : "Please enter your email and our team will contact you."}
-            </p>
-
+            <div className="humanDrawerHeaderSec">
+              <div>
+                <h3> {emailOnlyMode ? welcomeHeader : "Connect With Human"}</h3>
+                <p>
+                  {emailOnlyMode ? welcomeMessage : "Please enter your email to continue."}
+                </p>
+              </div>
+              <div className="drawerImageWrapper">
+                <img
+                  src={welcomeImage}
+                  alt="Welcome"
+                  className="drawerWelcomeImage"
+                  onError={(e) => {
+                    e.target.src = "/logo-sec.png";
+                  }}
+                />
+              </div>
+            </div>
             <input
               type="email"
               placeholder="Enter your email"
