@@ -144,7 +144,7 @@ const OwnerAccount = () => {
 
                         {/* Sitemap */}
                         <div className="form-group">
-                            <label>Sitemap URL</label>
+                            <label>Website URL</label>
                             <input
                                 type="text"
                                 name="sitemapUrl"
@@ -156,8 +156,7 @@ const OwnerAccount = () => {
                     </div>
 
                     <div className="form-flex">
-                        {/* PDF Upload */}
-                        <div className="form-group">
+                        {/* <div className="form-group">
                             <label>Upload PDF</label>
 
                             {isEditing ? (
@@ -178,7 +177,8 @@ const OwnerAccount = () => {
                                     {user?.pdfUrl || "No PDF uploaded"}
                                 </p>
                             )}
-                        </div>
+                        </div> */}
+                       
 
                         {/* Subscription */}
                         <div className="form-group">
@@ -189,6 +189,7 @@ const OwnerAccount = () => {
                                 disabled
                             />
                         </div>
+                          <div className="form-group"></div>
                     </div>
 
                     {/* Buttons */}

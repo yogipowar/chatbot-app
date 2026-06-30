@@ -34,6 +34,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [websiteUrl, setWebsiteUrl] = useState("");
     const navigate = useNavigate();
 
 
@@ -58,6 +59,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
         formData.append("username", username);
         formData.append("password", password);
         formData.append("role", "2");
+        formData.append("sitemapUrl", websiteUrl);
 
         try {
             const res = await fetch(
@@ -72,6 +74,7 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
 
             if (data.status || data.success) {
                 onSuccess(data.user.id); // pass the created user id
+                navigate('/login')
             } else {
                 setError(data.message || "Registration failed");
             }
@@ -119,6 +122,17 @@ const AddAdminModal = ({ onClose, onSuccess }) => {
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </span>
                         </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Website URL</label>
+                        <input
+                            type="url"
+                            value={websiteUrl}
+                            onChange={(e) => setWebsiteUrl(e.target.value)}
+                            placeholder="https://example.com"
+                            required
+                        />
                     </div>
 
 
@@ -169,7 +183,7 @@ const Plans = () => {
     const handleSuccess = (userId) => {
         setCreatedUserId(userId);
         setIsModalOpen(false);
-        setIsWebsiteModalOpen(true);
+        // setIsWebsiteModalOpen(true);
     };
 
     const features = [
@@ -555,12 +569,12 @@ const Plans = () => {
                 />
             )}
 
-            {isWebsiteModalOpen && (
+            {/* {isWebsiteModalOpen && (
                 <WebsiteModal
                     userId={createdUserId}
                     onClose={() => setIsWebsiteModalOpen(false)}
                 />
-            )}
+            )} */}
 
             <footer className="landing-footer">
                 <p>© 2026 WC chatbot. All rights reserved.</p>
